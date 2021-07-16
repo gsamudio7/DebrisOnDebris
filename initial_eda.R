@@ -19,14 +19,25 @@ library(dplyr)
 # fwrite(observations,"trimmedData.csv")
 
 
+# # Read in trimmed data
+# observations <- fread("trimmedData.csv")
+# 
+# # Insert PcNom value when there is no PcBest ####
+# observations[,"Pc" := ifelse(is.na(`Pc Best`),`Pc Nom`,`Pc Best`)]
+# 
+# # Drop redundant Pc columns so we have only one Pc column
+# observations <- observations[,!c("Pc Best","Pc Nom")]
+# 
+# # Write
+# fwrite(observations,"trimmedData.csv")
+
+
+# Divide entries up into bins by time to TCA ####
 # Read in trimmed data
 observations <- fread("trimmedData.csv")
+observations[,`Days to TCA`] %>% summary()
 
-# Insert PcNom value when there is no PcBest
-observations[,"Pc" := ifelse(is.na(`Pc Best`),`Pc Nom`,`Pc Best`)]
+# Crude histogram of TCA distribution
+observations[,`Days to TCA`] %>% hist()
 
-# Drop redundant Pc columns so we have only one Pc column
-observations <- observations[,!c("Pc Best","Pc Nom")]
 
-# Write
-fwrite(observations,"trimmedData.csv")
