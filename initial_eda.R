@@ -28,3 +28,5 @@ observations[,"Pc" := ifelse(is.na(`Pc Best`),`Pc Nom`,`Pc Best`)]
 # Drop redundant Pc columns so we have only one Pc column
 observations <- observations[,!c("Pc Best","Pc Nom")]
 
+# Write
+fwrite(observations,"trimmedData.csv")
