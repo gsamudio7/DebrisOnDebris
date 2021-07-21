@@ -167,3 +167,8 @@ events[Pc > 1e-5,.("Warning Threshold"=ifelse(Pc > 1e-4,"1e-4","1e-5"),
 
 
 
+
+# Introduce the # of fragments as a second consideration ####
+
+
+
