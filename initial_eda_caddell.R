@@ -3,33 +3,33 @@ library(ggthemes)
 
 events <- read_csv("events.csv")
 
-ggplot(events, aes(`Days to TCA`))+
+ggplot(events, aes(Days_to_TCA))+
   geom_histogram()+
   theme_minimal()
 
 events %>% 
-ggplot(aes(Pc, `Days to TCA`))+
+ggplot(aes(Pc, Days_to_TCA))+
   geom_point()+
   theme_minimal()
 
 events %>% 
-  filter(`Event Number` < 500,
-         `Days to TCA` < 5) %>%
-  arrange(`Event Number`, desc(`Days to TCA`)) %>% 
-  ggplot(aes(`Days to TCA`, Pc))+
+  filter(EventNumber < 500,
+         Days_to_TCA < 5) %>%
+  arrange(EventNumber, desc(Days_to_TCA)) %>% 
+  ggplot(aes(Days_to_TCA, Pc))+
   geom_point(alpha = .5)+
-  geom_line(aes(group = `Event Number`), alpha = .5, arrow = arrow(angle = 25))+
+  geom_line(aes(group = EventNumber), alpha = .5, arrow = arrow(angle = 25))+
   scale_x_reverse()+
   theme_minimal()
 
 event_summary <- events %>% 
-  group_by(`Event Number`) %>% 
+  group_by(EventNumber) %>% 
   summarize(observations= n(), 
-            last_notice = min(`Days to TCA`), 
-            first_notice = (max(`Days to TCA`)),
+            last_notice = min(Days_to_TCA), 
+            first_notice = (max(Days_to_TCA)),
             Pc_max = max(Pc),
             Pc_min= min(Pc),
-            Pc_at_last_notice = Pc[which.min(`Days to TCA`)],
+            Pc_at_last_notice = Pc[which.min(Days_to_TCA)],
             days_tracked = first_notice - last_notice,
             single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices")))
   
@@ -74,26 +74,23 @@ event_summary %>%
   facet_grid(rows = vars(single_notice))
 
 #suggested analysis from Matt
-events <- events %>% 
-  mutate(pc = if_else(is.na(pc_best), pc_nom, pc_best))
-
 
 events %>% 
-  filter(!is.na(`Days to TCA`)) %>% 
+  filter(!is.na(Days_to_TCA)) %>% 
 ggplot(aes(log10(Pc)))+
   stat_ecdf()+
   #scale_x_continuous(limits = c(0,.0000025))+
-  facet_wrap(~floor(`Days to TCA`), drop = TRUE, ncol = 1)+
+  facet_wrap(~floor(Days_to_TCA), drop = TRUE, ncol = 1)+
   theme_minimal()
 
 
 events %>% 
-  filter(!is.na(`Days to TCA`)) %>% 
-  ggplot(aes(Pc, color= as.factor(floor(`Days to TCA`))))+
+  filter(!is.na(Days_to_TCA)) %>% 
+  ggplot(aes(Pc, color= as.factor(floor(Days_to_TCA))))+
   stat_ecdf()+
   scale_x_continuous(limits = c(0,.00001))+
   theme_minimal()+
-  labs(color = "`Days to TCA`",
+  labs(color = "Days_to_TCA",
        y = "CDF")
 
 #only 392 events with pc > .0001 or 
@@ -106,13 +103,16 @@ events %>%
 
 #there is prob_cat that makes the number of fragments harder to use
 #here I'll use the .5 as yes to make it easy
-events <- events %>% 
-  mutate(frag = if_else(ProbCatIfColl > .5, NumFragIfCatColl, NumFragIfNonCatColl),
-         frag_breaks = cut(frag, breaks = c(0,10, 50, 100, 200, Inf)))
+# events <- events %>% 
+#   mutate(frag = if_else(ProbCatIfColl > .5, NumFragIfCatColl, NumFragIfNonCatColl),       #this doesn't work anymore no split for numfrag
+#          frag_breaks = cut(frag, breaks = c(0,10, 50, 100, 200, Inf)))
+
+events <- events %>%
+  mutate(frag_breaks = cut(NumFrag, breaks = c(0,10, 50, 100, 200, Inf)))
 
 events %>% 
-  filter(!is.na(`Days to TCA`)) %>% 
-  select(Pc, frag_breaks, `Event Number`) %>% 
+  filter(!is.na(Days_to_TCA)) %>% 
+  select(Pc, frag_breaks, EventNumber) %>% 
   unique() %>% 
   ggplot(aes(Pc, color = frag_breaks))+
   stat_ecdf()+
@@ -121,8 +121,8 @@ events %>%
        y = "CDF")
 
 events %>% 
-  filter(!is.na(`Days to TCA`)) %>% 
-  select(frag_breaks, `Event Number`) %>% 
+  filter(!is.na(Days_to_TCA)) %>% 
+  select(frag_breaks, EventNumber) %>% 
   unique() %>% 
   ggplot(aes(frag_breaks))+
   geom_histogram(stat = 'count')+
@@ -131,7 +131,7 @@ events %>%
 #with a pc set of .0001 and only less than 5 days to collislion, there would have been 392 events
 events %>% 
   filter(Pc > .0001,
-         `Days to TCA` < 5)
+         Days_to_TCA < 5)
 
 #If I'm reading this right, there was never a PC above.0044
 events %>% 
