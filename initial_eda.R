@@ -5,9 +5,9 @@
 # 
 # 
 # Imports
-library(data.table)
-library(dplyr)
-library(fst)
+# library(data.table)
+# library(dplyr)
+# library(fst)
 
 # # Read in the raw data 
 # debrisData <- fread("DebrisOnDebris.csv", fill=TRUE)
@@ -47,21 +47,67 @@ library(fst)
 events <- fread("events.csv")
 
 # Insert PcNom value when there is no PcBest ####
+
+# Verify the "when there is no Pc Best"
+events[is.na(`Pc Best`),.N] # 148950
+events[is.nan(`Pc Best`),.N] # 0
+events[!is.na(`Pc Best`),.N] # 261939
+nrow(events)==events[is.na(`Pc Best`),.N] + events[!is.na(`Pc Best`),.N]
+
+# Generate "Pc" column
 events[,"Pc" := ifelse(is.na(`Pc Best`),`Pc Nom`,`Pc Best`)]
 
 # Drop redundant Pc columns so we have only one Pc column
 events <- events[,!c("Pc Best","Pc Nom")]
 
-# Write
-fwrite(events,"trimmedData.csv")
+# Write and push to Git hub
+fwrite(events,"events.csv")
 
 
 # Divide entries up into bins by time to TCA ####
+library(data.table)
+library(dplyr)
+library(fst)
+
 # Read in trimmed data
-events <- fread("trimmedData.csv")
+events <- fread("events.csv")
 events[,`Days to TCA`] %>% summary()
 
-# Crude histogram of TCA distribution
-events[,`Days to TCA`] %>% hist()
+# Crude histogram of TCA distribution (will pretty this up for the final product)
+events[,`Days to TCA`] %>% hist() # Uniform distribution
+
+# Create TCA Bin column
+events[,"TCA Bin" := as.factor(round(`Days to TCA`))]
+
+# Plot PDF of the Pc values for each bin ####
+events[,unique(`TCA Bin`)]
+
+# How many NA values?
+events[is.na(`TCA Bin`),.N] # Just one
+events[is.na(`TCA Bin`)] # Inspect
+
+# How many other events with the same event number (118.47)
+events[`Event Number`==118.47,.N] # Just one
+
+# Drop it!
+events <- events[`Event Number`!=118.47]
+
+# Configure data set to show Pc Values grouped by TCA bin
 
 
+# Plot
+library(plotly)
+library(RColorBrewer)
+
+# Configure data set to show Pc Values grouped by TCA bin (fix me - this looks so ugly)
+TCA_bin_plot <- events[,Pc,by=`TCA Bin`] %>% 
+  
+  # Plot
+  plot_ly(type="histogram",
+          x=~log(Pc),
+          color =~`TCA Bin`,
+          colors=colorRampPalette(brewer.pal(10,"Spectral"))(10)) %>%
+  layout(
+    xaxis = list(title="Probability of Collision",
+                 tickvals = c(-600,-400,-200),
+                 ticktext = exp(c(-600,-400,-200))))
