@@ -31,7 +31,7 @@ event_summary <- events %>%
             Pc_min= min(Pc),
             Pc_at_last_notice = Pc[which.min(Days_to_TCA)],
             days_tracked = first_notice - last_notice,
-            frag = NumFrag,
+            frag = NumFrag[which.min(Days_to_TCA)],
             single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices"))) %>% 
   ungroup() %>% 
   unique()
