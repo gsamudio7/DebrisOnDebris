@@ -205,24 +205,26 @@ events[!is.na(NumFrag),NumFrag,by=c("EventNumber","Catastrophic")] %>%
 # Use 0.5 < Days_to_TCA < 1 as proxy for an actual collision
 events[,"Collision" := as.factor(Days_to_TCA > 0.5 & Days_to_TCA < 1.0)]
 
+
+
+
 # If the General wants a five day warning time, 
 # what threshold would have to be applied at five days to TCA to warn
 # for every conjunction with a Pc > 1e-4 or 1e-5 at 1 day to TCA?
 
-
-
 events[
   # Find the events that have a TCA of at least 5 days out
-  events[Days_to_TCA > 5,EventNumber] %in% EventNumber & 
-    
-    # Of these events, which ones also have a TCA within a day
-         Days_to_TCA < 1 &
-    
-    # With a Pc of greater than 1e-5 (within a TCA of one day)
-         Pc > 1e-5 &
-    
-    # Which are predicted to collide
-         Collision==TRUE,Pc] %>% hist()
+  Days_to_TCA > 5 & Collision==TRUE,Pc] %>% 
+  
+  plot_ly(type="histogram",
+          x=~Pc) %>%
+  layout(
+    title = "<b>Histogram of Probability of Collision at 5 days\nfor Events with a Pc > 1e-5 at 1 day out"
+    yaxis = list(title="<b>Number of Events</b>",
+                 gridcolor = "#D3D3D3"),
+    plot_bgcolor  = "#3F3F3F",
+    paper_bgcolor = "#3F3F3F",
+    font = list(color = '#D3D3D3'))
 
 
 # 
