@@ -100,7 +100,7 @@ library(plotly)
 library(RColorBrewer)
 
 # Configure data set to show Pc Values grouped by TCA bin (fix me - this looks so ugly)
-TCA_bin_plot <- events[,Pc,by=`TCA Bin`] %>% 
+events[,Pc,by=`TCA Bin`] %>% 
   
   # Plot
   plot_ly(type="histogram",
@@ -109,5 +109,5 @@ TCA_bin_plot <- events[,Pc,by=`TCA Bin`] %>%
           colors=colorRampPalette(brewer.pal(10,"Spectral"))(10)) %>%
   layout(
     xaxis = list(title="Probability of Collision",
-                 tickvals = c(-600,-400,-200),
-                 ticktext = exp(c(-600,-400,-200))))
+                 tickvals = c(-600,-400,-200,0,1.001),
+                 ticktext = exp(c(-600,-400,-200,0,1e-04))))
