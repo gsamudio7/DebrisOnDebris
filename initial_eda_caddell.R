@@ -31,7 +31,9 @@ event_summary <- events %>%
             Pc_min= min(Pc),
             Pc_at_last_notice = Pc[which.min(Days_to_TCA)],
             days_tracked = first_notice - last_notice,
-            single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices")))
+            frag = NumFrag,
+            single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices"))) %>% 
+  ungroup()
   
 ggplot(event_summary, aes(x = days_tracked))+
   geom_density(adjust = 2)+
@@ -145,3 +147,10 @@ ggplot(events, aes(Pc))+
 
 event_summary %>% 
   count(Pc_at_last_notice > .001)
+
+
+event_summary %>% 
+  filter(last_notice < 5,
+         frag > 10) %>% 
+  summarise(total_pc = sum(Pc_at_last_notice, na.rm = TRUE))
+
