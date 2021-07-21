@@ -30,7 +30,7 @@
 # events <- events[,c(48,49,9,6,12,14,15)]
 # events <- events %>%
 #   setnames(c("V48","V49","V9","V6","V12","V14","V15"),
-#            c("Event Number","Days to TCA","Pc Best","Pc Nom","ProbCatIfColl",
+#            c("EventNumber","Days_to_TCA","Pc Best","Pc Nom","ProbCatIfColl",
 #              "NumFragIfCatColl","NumFragIfNonCatColl"))
 # 
 # # Write
@@ -81,26 +81,26 @@ library(fst)
 
 # Read in trimmed data
 events <- fread("events.csv")
-events[,`Days to TCA`] %>% summary()
+events[,`Days_to_TCA`] %>% summary()
 
 # Crude histogram of TCA distribution (will pretty this up for the final product)
-events[,`Days to TCA`] %>% hist() # Uniform distribution
+events[,`Days_to_TCA`] %>% hist() # Uniform distribution
 
 # Create TCA Bin column
-events[,"TCA Bin" := as.factor(round(`Days to TCA`))]
+events[,"TCA_Bin" := as.factor(round(`Days_to_TCA`))]
 
 # Plot PDF of the Pc values for each bin ####
-events[,unique(`TCA Bin`)]
+events[,unique(`TCA_Bin`)]
 
 # How many NA values for TCA?
-events[is.na(`TCA Bin`),.N] # Just one
-events[is.na(`TCA Bin`)] # Inspect
+events[is.na(`TCA_Bin`),.N] # Just one
+events[is.na(`TCA_Bin`)] # Inspect
 
 # How many other events with the same event number (118.47)
-events[`Event Number`==118.47,.N] # Just one
+events[`EventNumber`==118.47,.N] # Just one
 
 # Drop it!
-events <- events[`Event Number`!=118.47]
+events <- events[`EventNumber`!=118.47]
 
 # Configure data set to show Pc Values grouped by TCA bin
 
@@ -119,23 +119,23 @@ library(plotly)
 library(RColorBrewer)
 
 # Configure data set to show Pc Values grouped by TCA bin (fix me - this looks so ugly)
-events[,Pc,by=`TCA Bin`] %>% 
+events[,Pc,by=`TCA_Bin`] %>% 
 
   # Plot
   plot_ly(type="histogram",
           x=~Pc, 
-          color =~`TCA Bin`,
+          color =~`TCA_Bin`,
           nbinsx=35,
           colors=colorRampPalette(brewer.pal(10,"Spectral"))(10)) 
   
 # Lots of 0 - plot without Pc == 0
 
-events[Pc > 0,Pc,by=`TCA Bin`] %>% 
+events[Pc > 0,Pc,by=`TCA_Bin`] %>% 
   
   # Plot
   plot_ly(type="histogram",
           x=~log(Pc), 
-          color =~`TCA Bin`,
+          color =~`TCA_Bin`,
           nbinsx=35,
           colors=colorRampPalette(brewer.pal(10,"Spectral"))(10)) %>%
 
@@ -158,9 +158,9 @@ events[Pc > 0,Pc,by=`TCA Bin`] %>%
 
 # How many warnings would be issued at each TCA bin?
 events[Pc > 1e-5,.("Warning Threshold"=ifelse(Pc > 1e-4,"1e-4","1e-5"),
-                   "Warnings Issued"=.N),by=`TCA Bin`] %>% 
+                   "Warnings Issued"=.N),by=`TCA_Bin`] %>% 
   plot_ly(type="bar",
-          x=~`TCA Bin`,
+          x=~`TCA_Bin`,
           y=~`Warnings Issued`,
           color=~`Warning Threshold`,
           colors=colorRampPalette(brewer.pal(3,"Set2"))(2))
@@ -183,7 +183,7 @@ events <- events[,!c("NumFragIfCatColl","NumFragIfNonCatColl")]
 fwrite(events,"events.csv")
 
 # Plot histogram of # of fragments for each catastrophic event
-events[!is.na(NumFrag),NumFrag,by=c("Event Number","Catastrophic")] %>%
+events[!is.na(NumFrag),NumFrag,by=c("EventNumber","Catastrophic")] %>%
   
   plot_ly(type="histogram",
           x=~log(NumFrag),
@@ -202,3 +202,27 @@ events[!is.na(NumFrag),NumFrag,by=c("Event Number","Catastrophic")] %>%
 
 
 # Time series!!!
+# Use 0.5 < Days_to_TCA < 1 as proxy for an actual collision
+events[,"Collision" := as.factor(Days_to_TCA > 0.5 & Days_to_TCA < 1.0)]
+
+# If the General wants a five day warning time, 
+# what threshold would have to be applied at five days to TCA to warn
+# for every conjunction with a Pc > 1e-4 or 1e-5 at 1 day to TCA?
+
+
+
+events[
+  # Find the events that have a TCA of at least 5 days out
+  events[Days_to_TCA > 5,EventNumber] %in% EventNumber & 
+    
+    # Of these events, which ones also have a TCA within a day
+         Days_to_TCA < 1 &
+    
+    # With a Pc of greater than 1e-5 (within a TCA of one day)
+         Pc > 1e-5 &
+    
+    # Which are predicted to collide
+         Collision==TRUE,Pc] %>% hist()
+
+
+# 
