@@ -60,6 +60,16 @@ events[,"Pc" := ifelse(is.na(`Pc Best`),`Pc Nom`,`Pc Best`)]
 # Drop redundant Pc columns so we have only one Pc column
 events <- events[,!c("Pc Best","Pc Nom")]
 
+# How many NAs for Pc still left?
+events[is.na(Pc),.N] # 13
+
+# Inspect
+events[is.na(Pc)]
+
+# NAs across ProbCatIfColl / NumFragIfCatColl / NumFragIfNonCatColl / Pc
+# Drop them!
+events <- events[!is.na(Pc)]
+
 # Write and push to Git hub
 fwrite(events,"events.csv")
 
@@ -82,7 +92,7 @@ events[,"TCA Bin" := as.factor(round(`Days to TCA`))]
 # Plot PDF of the Pc values for each bin ####
 events[,unique(`TCA Bin`)]
 
-# How many NA values?
+# How many NA values for TCA?
 events[is.na(`TCA Bin`),.N] # Just one
 events[is.na(`TCA Bin`)] # Inspect
 
@@ -94,6 +104,15 @@ events <- events[`Event Number`!=118.47]
 
 # Configure data set to show Pc Values grouped by TCA bin
 
+# How many Pc at 0?
+events[Pc==0,.N] # 231677
+
+# How many Pc above 1e-4?
+events[Pc > 1e-4,.N]
+
+# Percentage of events with Pc above 1e-4?
+events[Pc > 1e-4,.N]/events[,.N]*100 # 0.0954
+
 
 # Plot
 library(plotly)
@@ -101,13 +120,50 @@ library(RColorBrewer)
 
 # Configure data set to show Pc Values grouped by TCA bin (fix me - this looks so ugly)
 events[,Pc,by=`TCA Bin`] %>% 
+
+  # Plot
+  plot_ly(type="histogram",
+          x=~Pc, 
+          color =~`TCA Bin`,
+          nbinsx=35,
+          colors=colorRampPalette(brewer.pal(10,"Spectral"))(10)) 
+  
+# Lots of 0 - plot without Pc == 0
+
+events[Pc > 0,Pc,by=`TCA Bin`] %>% 
   
   # Plot
   plot_ly(type="histogram",
-          x=~log(Pc),
+          x=~log(Pc), 
           color =~`TCA Bin`,
+          nbinsx=35,
           colors=colorRampPalette(brewer.pal(10,"Spectral"))(10)) %>%
+
   layout(
-    xaxis = list(title="Probability of Collision",
-                 tickvals = c(-600,-400,-200,0,1.001),
-                 ticktext = exp(c(-600,-400,-200,0,1e-04))))
+    title = '<b>Histogram of Pc by TCA Bin</b>',
+    xaxis = list(title="<b>Probability of Collision</b>",
+                 tickvals = ~Pc %>% log() %>% quantile(0:3/3),
+                 ticktext = ~Pc %>% quantile(0:3/3)),
+    yaxis = list(gridcolor = "#D3D3D3"),
+    shapes = list(type ="line",
+                  line = list(color="white"),
+                  x0 = log(1e-4), x1 = log(1e-4),
+                  y0 = 0, y1 = 6000),
+    annotations = list(text = paste("<b>1e-4 Pc</b>"),
+                       x = log(1e-35), y = 5800, showarrow=FALSE),
+    legend=list(title=list(text='<b> TCA Bin </b>')),
+    plot_bgcolor  = "#3F3F3F",
+    paper_bgcolor = "#3F3F3F",
+    font = list(color = '#D3D3D3'))
+
+# How many warnings would be issued at each TCA bin?
+events[Pc > 1e-5,.("Warning Threshold"=ifelse(Pc > 1e-4,"1e-4","1e-5"),
+                   "Warnings Issued"=.N),by=`TCA Bin`] %>% 
+  plot_ly(type="bar",
+          x=~`TCA Bin`,
+          y=~`Warnings Issued`,
+          color=~`Warning Threshold`,
+          colors=colorRampPalette(brewer.pal(3,"Spectral"))(2))
+
+
+
