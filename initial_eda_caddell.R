@@ -142,3 +142,6 @@ ggplot(events, aes(Pc))+
   theme_minimal()
 
 #its because all pc_nom above that threshold had small values for pc_best
+
+event_summary %>% 
+  count(Pc_at_last_notice > .001)
