@@ -170,5 +170,9 @@ events[Pc > 1e-5,.("Warning Threshold"=ifelse(Pc > 1e-4,"1e-4","1e-5"),
 
 # Introduce the # of fragments as a second consideration ####
 
+# Label catastrophic events!
+events[,"Catastrophic" := as.factor(ProbCatIfColl > 0.5)]
 
+# Write and push to Git
+fwrite(events,"events.csv")
 
