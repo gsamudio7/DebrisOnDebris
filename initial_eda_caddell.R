@@ -33,7 +33,8 @@ event_summary <- events %>%
             days_tracked = first_notice - last_notice,
             frag = NumFrag,
             single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices"))) %>% 
-  ungroup()
+  ungroup() %>% 
+  unique()
   
 ggplot(event_summary, aes(x = days_tracked))+
   geom_density(adjust = 2)+
@@ -43,7 +44,7 @@ ggplot(event_summary, aes(last_notice))+
   geom_density(adjust = 2)+
   theme_minimal()
 
-#57% of events appear to stop being of concern before the 2.5 day mark
+#41% of events appear to stop being of concern before the 2.5 day mark
 event_summary %>% 
   summarise(stopped_tracking = sum(last_notice > 2.5, na.rm = TRUE), stopped_tracking_pct = stopped_tracking/n())
 
@@ -51,7 +52,7 @@ ggplot(event_summary, aes(first_notice))+
   geom_density(adjust = 2)+
   theme_minimal()
 
-#only 80 events contain a Pc > .0001 within the 2 day mark ... that's .07% of the dataset
+#only 257 events contain a Pc > .0001 within the 2 day mark ... that's .1% of the dataset
 event_summary %>% 
   filter(last_notice < 2,
          Pc_at_last_notice > .0001) %>% 
@@ -146,7 +147,8 @@ ggplot(events, aes(Pc))+
 #its because all pc_nom above that threshold had small values for pc_best
 
 event_summary %>% 
-  count(Pc_at_last_notice > .001)
+  filter(last_notice < 5) %>% 
+  count(Pc_max > .001)
 
 
 event_summary %>% 
@@ -154,3 +156,6 @@ event_summary %>%
          frag > 10) %>% 
   summarise(total_pc = sum(Pc_at_last_notice, na.rm = TRUE))
 
+event_summary %>% 
+  filter(first_notice >= 5,
+         Pc_at_last_notice > .0001)
