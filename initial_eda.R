@@ -163,7 +163,7 @@ events[Pc > 1e-5,.("Warning Threshold"=ifelse(Pc > 1e-4,"1e-4","1e-5"),
           x=~`TCA Bin`,
           y=~`Warnings Issued`,
           color=~`Warning Threshold`,
-          colors=colorRampPalette(brewer.pal(3,"Spectral"))(2))
+          colors=colorRampPalette(brewer.pal(3,"Set2"))(2))
 
 
 
@@ -171,8 +171,34 @@ events[Pc > 1e-5,.("Warning Threshold"=ifelse(Pc > 1e-4,"1e-4","1e-5"),
 # Introduce the # of fragments as a second consideration ####
 
 # Label catastrophic events!
-events[,"Catastrophic" := as.factor(ProbCatIfColl > 0.5)]
+events[,"Catastrophic" := as.factor(ifelse(ProbCatIfColl > 0.5,"Catastrophic","Not catastrophic"))]
+
+# Label num of fragments
+events[,"NumFrag" := ifelse(Catastrophic==TRUE,NumFragIfCatColl,NumFragIfNonCatColl)]
+
+# Drop two redundant columns
+events <- events[,!c("NumFragIfCatColl","NumFragIfNonCatColl")]
 
 # Write and push to Git
 fwrite(events,"events.csv")
 
+# Plot histogram of # of fragments for each catastrophic event
+events[!is.na(NumFrag),NumFrag,by=c("Event Number","Catastrophic")] %>%
+  
+  plot_ly(type="histogram",
+          x=~log(NumFrag),
+          color=~Catastrophic,
+          nbinsx=35) %>%
+  layout(
+    title = '<b>Histogram of Number of Fragments by Event</b>',
+    xaxis = list(title="<b>Fragment Count</b>",
+                 tickvals = ~NumFrag %>% log() %>% quantile(0:7/7),
+                 ticktext = ~NumFrag %>% quantile(0:7/7) %>% round(2)),
+    yaxis = list(title="<b>Number of Events</b>",
+                 gridcolor = "#D3D3D3"),
+    plot_bgcolor  = "#3F3F3F",
+    paper_bgcolor = "#3F3F3F",
+    font = list(color = '#D3D3D3'))
+
+
+# Time series!!!
