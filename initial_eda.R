@@ -9,15 +9,15 @@
 # library(dplyr)
 # library(fst)
 
-# # Read in the raw data 
-# debrisData <- fread("DebrisOnDebris.csv", fill=TRUE)
-# dim(debrisData) # 410889 rows and 49 columns
-# 
-# # Write and compress to store in Git repo
-# write_fst(debrisData, "DebrisOnDebris.fst", compress = 100)
-# 
-# # Remove raw large data set 
-# unlink("DebrisOnDebris.csv")
+# Read in the raw data
+debrisData <- fread("DebrisOnDebris3.txt")
+dim(debrisData) # 410889 rows and 49 columns
+
+# Write and compress to store in Git repo
+write_fst(debrisData, "DebrisOnDebris3.fst", compress = 100)
+
+# Remove raw large data set
+unlink("DebrisOnDebris.csv")
 # 
 # # Now entire data set is compressed and can be stored in Git repo
 # 
