@@ -21,7 +21,7 @@ event_summary <- events %>%
             last_notice = min(time2TCA),
             first_notice = max(time2TCA),
             Pc_max = max(.data[[paste0("PcFrag",Frag_considered)]]),
-            Pc_first = .data[[paste0("PcFrag",Frag_considered)]][which.max(time2TCA)],                 #This funky call allows the frag to be dynamic based off user input
+            Pc_first = .data[[paste0("PcFrag",Frag_considered)]][which.max(time2TCA)],      #This funky call allows the frag to be dynamic based off user input
             Pc_last= .data[[paste0("PcFrag",Frag_considered)]][which.min(time2TCA)])
 
 final <- event_summary %>% 
