@@ -6,10 +6,12 @@ library(rlang)
 events <- read_csv("data/events.csv") %>% 
   mutate(PcFrag10000 = as.numeric(PcFrag10000))
 
-tca_notice_threshold  = 5   #earliest day to get notifed
-Pc_threshold = .00001        #this is the level the decision maker sets for notification
-collision_prob = .00015     #this will end up being a probability pull
-Frag_considered = "100"      #which category we are looking at
+
+debris_cm <- function(sim_num = 1, tca_notice_threshold  = 5, Pc_threshold = .000001, collision_prob = .00015 , Frag_considered = "100" ) {
+# tca_notice_threshold  = 5   #earliest day to get notifed
+# Pc_threshold = .000001        #this is the level the decision maker sets for notification
+# collision_prob = .00015     #this will end up being a probability pull
+# Frag_considered = "100"      #which category we are looking at
 
 event_summary <- events %>% 
   lazy_dt() %>% 
@@ -23,12 +25,16 @@ event_summary <- events %>%
             Pc_max = max(.data[[paste0("PcFrag",Frag_considered)]]),
             Pc_first = .data[[paste0("PcFrag",Frag_considered)]][which.max(time2TCA)],      #This funky call allows the frag to be dynamic based off user input
             Pc_last= .data[[paste0("PcFrag",Frag_considered)]][which.min(time2TCA)]) %>% 
-  as_tibble()
+  as_tibble() %>% 
+  na.omit()
+
+
+collision_sim <- runif(n = nrow(event_summary), min = 0, max = 1)
 
 final <- event_summary %>% 
-  na.omit() %>% 
-  mutate(collision = Pc_last > collision_prob, #collision_prob should be calculated every time in the future
-         warning_issued = Pc_max >= Pc_threshold, #warning issued if Pc ever breaks threshold
+  mutate(warning_issued = Pc_max >= Pc_threshold, #warning issued if Pc ever breaks threshold
+         collision_prob = collision_sim[row_number()], #you can comment this on/off
+         collision = Pc_last >= collision_prob, #collision_prob should be calculated every time in the future
          true_pos = warning_issued & collision,
          true_neg = warning_issued & !collision,
          false_pos = !warning_issued & collision,
@@ -39,3 +45,14 @@ final <- event_summary %>%
             true_neg_rate = sum(true_neg, na.rm = TRUE)/total_warnings,
             false_pos_rate = sum(false_pos, na.rm = TRUE)/(n()-total_warnings),
             false_neg_rate = sum(false_neg, na.rm = TRUE)/(n()-total_warnings))
+
+return(final)
+}
+
+#run the model several times
+sim <- vector(mode = 'list', length = 10) %>% 
+  lapply(debris_cm)%>% 
+  bind_rows()
+
+sim
+
