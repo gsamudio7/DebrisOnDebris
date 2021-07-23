@@ -4,7 +4,47 @@
 
 
 # Read in trimmed data
-events <- fread("events.csv")
+events <- fread("data/events.csv")
+
+# Make boolean column of collision or not
+# First get the eventNumbers that result in a collision:
+collisionEvents <- events[time2TCA < 1,unique(eventNumber)]
+length(collisionEvents) # 70609
+
+
+
+# Function that takes as input:
+## days to TCA
+## Number of fragments
+## Threshold Prob of Collision 
+
+# and gives output:
+## number of events warned that resulted in a collision
+## number of events warned that did not result in a collision
+## number of events not warned that resulted in a collision
+## number of events not warned that did not result in a collision
+
+# Organize inputs:
+days_to_TCA <- 5
+threshold_Pc <- 1e-3
+number_of_fragments <- 10
+
+# Screen data:
+# Get the event numbers that have at least the input days to TCA
+criticalEvents <- events[time2TCA > 5,unique(eventNumber)]
+
+cat(sprintf("Found %g events with at least %g days to TCA\n",
+        length(criticalEvents), 
+        days_to_TCA))
+
+# Find the 
+
+
+
+
+
+
+
 
 # Insert PcNom value when there is no PcBest ####
 
