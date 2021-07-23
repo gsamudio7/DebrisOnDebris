@@ -1,41 +1,54 @@
 library(tidyverse)
 library(ggthemes)
 
-events <- read_csv("events.csv")
+events <- read_csv("data/events.csv") %>% 
+  mutate(PcFrag10000 = as.numeric(PcFrag10000))
 
-ggplot(events, aes(Days_to_TCA))+
+
+ggplot(events, aes(time2TCA))+
   geom_histogram()+
   theme_minimal()
 
 events %>% 
-ggplot(aes(Pc, Days_to_TCA))+
+ggplot(aes(PcBest, time2TCA))+
   geom_point()+
   theme_minimal()
 
 events %>% 
-  filter(EventNumber < 500,
-         Days_to_TCA < 5) %>%
-  arrange(EventNumber, desc(Days_to_TCA)) %>% 
-  ggplot(aes(Days_to_TCA, Pc))+
+  filter(eventNumber < 5000,
+         time2TCA < 5) %>%
+  arrange(eventNumber, desc(TCA)) %>% 
+  ggplot(aes(time2TCA, PcBest))+
   geom_point(alpha = .5)+
-  geom_line(aes(group = EventNumber), alpha = .5, arrow = arrow(angle = 25))+
+  geom_line(aes(group = eventNumber), alpha = .5, arrow = arrow(angle = 25))+
   scale_x_reverse()+
   theme_minimal()
 
 event_summary <- events %>% 
-  group_by(EventNumber) %>% 
+  group_by(eventNumber) %>% 
   summarize(observations= n(), 
-            last_notice = min(Days_to_TCA), 
-            first_notice = (max(Days_to_TCA)),
-            Pc_max = max(Pc),
-            Pc_min= min(Pc),
-            Pc_at_last_notice = Pc[which.min(Days_to_TCA)],
+            last_notice = min(TCA - time_of_screening), 
+            first_notice = max(TCA - time_of_screening),
+            PcBest_max = max(PcBest),
+            PcBest_min= min(PcBest),
+            PcBest_at_last_notice = PcBest[which.max(time_of_screening)],
+            PcFrag10_max = max(PcFrag10),
+            PcFrag10_min= min(PcFrag10),
+            PcFrag10_at_last_notice = PcFrag10[which.max(time_of_screening)],
+            PcFrag100_max = max(PcFrag100),
+            PcFrag100_min= min(PcFrag100),
+            PcFrag100_at_last_notice = PcFrag100[which.max(time_of_screening)],
+            PcFrag1000_max = max(PcFrag1000),
+            PcFrag1000_min= min(PcFrag1000),
+            PcFrag1000_at_last_notice = PcFrag1000[which.max(time_of_screening)],
+            PcFrag10000_max = max(as.numeric(PcFrag10000)),
+            PcFrag10000_min= min(as.numeric(PcFrag10000)),
+            PcFrag10000_at_last_notice = as.numeric(PcFrag10000[which.max(time_of_screening)]),
             days_tracked = first_notice - last_notice,
-            frag = NumFrag[which.min(Days_to_TCA)],
+            TCA = min(TCA),
             single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices"))) %>% 
-  ungroup() %>% 
   unique()
-  
+
 ggplot(event_summary, aes(x = days_tracked))+
   geom_density(adjust = 2)+
   theme_minimal()
@@ -44,18 +57,19 @@ ggplot(event_summary, aes(last_notice))+
   geom_density(adjust = 2)+
   theme_minimal()
 
-#41% of events appear to stop being of concern before the 2.5 day mark
+#60% of events appear to stop being of concern before the 2.5 day mark
 event_summary %>% 
-  summarise(stopped_tracking = sum(last_notice > 2.5, na.rm = TRUE), stopped_tracking_pct = stopped_tracking/n())
+  summarise(stopped_tracking = sum(last_notice > 2.5, na.rm = TRUE), stopped_tracking_PcBestt = stopped_tracking/n())
 
-ggplot(event_summary, aes(first_notice))+
-  geom_density(adjust = 2)+
-  theme_minimal()
 
-#only 257 events contain a Pc > .0001 within the 2 day mark ... that's .1% of the dataset
+#only 11 events contain a PcBest_at_last > .0001 within the 5 day mark ... that's .005% of the dataset
 event_summary %>% 
-  filter(last_notice < 2,
-         Pc_at_last_notice > .0001) %>% 
+  filter(last_notice < 5,
+         PcBest_at_last_notice > .0001) %>% 
+  count()
+
+event_summary %>% 
+  filter(PcBest_at_last_notice > .0001) %>% 
   count()
 
 event_summary %>% 
@@ -79,30 +93,29 @@ event_summary %>%
 #suggested analysis from Matt
 
 events %>% 
-  filter(!is.na(Days_to_TCA)) %>% 
-ggplot(aes(log10(Pc)))+
+ggplot(aes(log10(PcBest)))+
   stat_ecdf()+
   #scale_x_continuous(limits = c(0,.0000025))+
-  facet_wrap(~floor(Days_to_TCA), drop = TRUE, ncol = 1)+
+  facet_wrap(~floor(time2TCA), drop = TRUE, ncol = 1)+
   theme_minimal()
 
 
 events %>% 
-  filter(!is.na(Days_to_TCA)) %>% 
-  ggplot(aes(Pc, color= as.factor(floor(Days_to_TCA))))+
+  filter(!is.na(TCA)) %>% 
+  ggplot(aes(PcBest, color= as.factor(floor(time2TCA))))+
   stat_ecdf()+
   scale_x_continuous(limits = c(0,.00001))+
   theme_minimal()+
-  labs(color = "Days_to_TCA",
+  labs(color = "TCA",
        y = "CDF")
 
-#only 392 events with pc > .0001 or 
+#only 27 events with PcBest > .0001 or 
 events %>% 
-  filter(Pc > .0001) %>% 
+  filter(PcBest > .0001) %>% 
   count()
 
-#that's .09% of all reports
-392/410889
+#that's .004% of all reports
+27/nrow(events)*100
 
 #there is prob_cat that makes the number of fragments harder to use
 #here I'll use the .5 as yes to make it easy
@@ -114,48 +127,48 @@ events <- events %>%
   mutate(frag_breaks = cut(NumFrag, breaks = c(0,10, 50, 100, 200, Inf)))
 
 events %>% 
-  filter(!is.na(Days_to_TCA)) %>% 
-  select(Pc, frag_breaks, EventNumber) %>% 
+  filter(!is.na(TCA)) %>% 
+  select(PcBest, frag_breaks, eventNumber) %>% 
   unique() %>% 
-  ggplot(aes(Pc, color = frag_breaks))+
+  ggplot(aes(PcBest, color = frag_breaks))+
   stat_ecdf()+
   theme_minimal()+
   labs(color = "Fragment",
        y = "CDF")
 
 events %>% 
-  filter(!is.na(Days_to_TCA)) %>% 
-  select(frag_breaks, EventNumber) %>% 
+  filter(!is.na(TCA)) %>% 
+  select(frag_breaks, eventNumber) %>% 
   unique() %>% 
   ggplot(aes(frag_breaks))+
   geom_histogram(stat = 'count')+
   theme_minimal()
 
-#with a pc set of .0001 and only less than 5 days to collislion, there would have been 392 events
+#with a PcBest set of .0001 and only less than 5 days to collislion, there would have been 392 events
 events %>% 
-  filter(Pc > .0001,
-         Days_to_TCA < 5)
+  filter(PcBest > .0001,
+         TCA < 5)
 
-#If I'm reading this right, there was never a PC above.0044
+#If I'm reading this right, there was never a PcBest above.0009
 events %>% 
-  arrange(desc(Pc))
+  arrange(desc(PcBest))
 
-ggplot(events, aes(Pc))+
+ggplot(events, aes(PcBest))+
   geom_histogram()+
   theme_minimal()
 
-#its because all pc_nom above that threshold had small values for pc_best
+#its because all PcBest_nom above that threshold had small values for PcBest_best
 
 event_summary %>% 
   filter(last_notice < 5) %>% 
-  count(Pc_max > .001)
+  count(PcBest_max > .001)
 
 
 event_summary %>% 
   filter(last_notice < 5,
          frag > 10) %>% 
-  summarise(total_pc = sum(Pc_at_last_notice, na.rm = TRUE))
+  summarise(total_PcBest = sum(PcBest_at_last_notice, na.rm = TRUE))
 
 event_summary %>% 
   filter(first_notice >= 5,
-         Pc_at_last_notice > .0001)
+         PcBest_at_last_notice > .0001)
