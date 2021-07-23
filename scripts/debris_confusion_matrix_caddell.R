@@ -33,6 +33,7 @@ debris_cm <- function(sim_num = 1, Pc_threshold = .000001, collision_prob = .000
 collision_sim <- runif(n = nrow(event_summary), min = 0, max = 1)
 
 final <- event_summary %>% 
+  na.omit() %>% 
   mutate(warning_issued = Pc_max >= Pc_threshold, #warning issued if Pc ever breaks threshold
          collision_prob = collision_sim[row_number()], #you can comment this on/off
          collision = Pc_last >= collision_prob, #collision_prob should be calculated every time in the future
@@ -42,10 +43,10 @@ final <- event_summary %>%
          false_neg = !warning_issued & collision) %>% 
   summarise(total_warnings = sum(warning_issued),
             total_collisions = sum(collision),
-            true_pos_rate = sum(true_pos, na.rm = TRUE)/total_collisions,
-            true_neg_rate = sum(true_neg, na.rm = TRUE)/(n()-total_collisions),
-            false_pos_rate = sum(false_pos, na.rm = TRUE)/total_collisions,
-            false_neg_rate = sum(false_neg, na.rm = TRUE)/(n()-total_collisions))
+            true_pos_rate = sum(true_pos)/total_collisions,
+            true_neg_rate = sum(true_neg)/(n()-total_collisions),
+            false_pos_rate = 1-true_pos_rate,
+            false_neg_rate = 1-true_neg_rate)
 
 return(final)
 }
@@ -58,9 +59,17 @@ sim <- vector(mode = 'list', length = 1000) %>%
 sim
 
 ggplot(sim, aes(total_warnings, total_collisions))+
-  geom_jitter(width = .1, height = .1)+
+  geom_jitter(width = .1, height = 0)+
   theme_minimal()
 
 ggplot(sim, aes(total_collisions))+
   geom_histogram()+
+  theme_minimal()
+
+ggplot(sim, aes(true_neg_rate, false_neg_rate))+
+  geom_point()+
+  theme_minimal()
+
+ggplot(sim, aes(true_pos_rate, false_pos_rate))+
+  geom_point()+
   theme_minimal()
