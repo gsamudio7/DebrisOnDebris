@@ -21,6 +21,8 @@ event_summary <- events %>%
   as_tibble() %>% 
   na.omit()
 
+#this function allows us to get a confusion matrix with static data, but with uncertain collision if desired.
+#We could add bootstrapping to it in the future if desired.
 debris_cm <- function(sim_num = 1, tca_notice_threshold  = 5, Pc_threshold = .000001, collision_prob = .00015 , Frag_considered = "100" ) {
 # tca_notice_threshold  = 5   #earliest day to get notifed
 # Pc_threshold = .000001        #this is the level the decision maker sets for notification
