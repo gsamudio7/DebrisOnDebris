@@ -24,12 +24,11 @@ event_summary <- events %>%
   as_tibble() %>% 
   na.omit()
 
-#this function allows us to get a confusion matrix with static data, but with uncertain collision if desired.
+#this function allows us to get a confusion matrix with static data, but with uncertain of collision if desired.
 #We could add bootstrapping to it in the future if desired.
 debris_cm <- function(sim_num = 1, Pc_threshold = .000001, collision_prob = .00015) {
 # Pc_threshold = .000001        #this is the level the decision maker sets for notification
 # collision_prob = .00015     #this will end up being a probability pull
-
 
 collision_sim <- runif(n = nrow(event_summary), min = 0, max = 1)
 
