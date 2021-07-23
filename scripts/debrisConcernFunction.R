@@ -12,7 +12,7 @@ debrisConcern <- function(Pc_concern=c(1e-3,1e-4,1e-5),
                           days_to_TCA=5,
                           threshold_Pc=1e-7,
                           number_of_fragments=1,
-                          verbose=FALSE) {
+                          verbose=TRUE) {
   
   # Function that takes as input:
   ## Pc threshold of concern
@@ -100,7 +100,10 @@ debrisConcern <- function(Pc_concern=c(1e-3,1e-4,1e-5),
         notWarned[Concern==TRUE,.N]/totalEventCount,notWarned[Concern==FALSE,.N]/totalEventCount))
     }
     
-    resultsList[[as.character(Pc)]] <- list("truePositiveRate"=warned[Concern==TRUE,.N]/totalEventCount,
+    resultsList[[as.character(Pc)]] <- list("Pc_concern"=Pc,
+                                            "threshold_Pc"=threshold_Pc,
+                                            "number_of_fragments"=number_of_fragments,
+                                            "truePositiveRate"=warned[Concern==TRUE,.N]/totalEventCount,
                                             "falsePositiveRate"=warned[Concern==FALSE,.N]/totalEventCount,
                                             "falseNegativeRate"=notWarned[Concern==TRUE,.N]/totalEventCount,
                                             "trueNegativeRate"=notWarned[Concern==FALSE,.N]/totalEventCount)
@@ -109,7 +112,20 @@ debrisConcern <- function(Pc_concern=c(1e-3,1e-4,1e-5),
   return(resultsList)
 }
 
-results <- debrisConcern()
+results <- debrisConcern(threshold_Pc=1e-9)
 
+# Visualize false negative rate changing as you vary the warning threshold
+warningThresholds <- c(1e-5,1e-10,1e-15)
+falseNegData <- data.table(
+  "PcConcern"=c(),
+  "WarningTHreshold"=c(),
+  "FragmentNum"=c(),
+  "falseNegRate"=c()
+)
 
+for (warning in warningThresholds) {
+  
+  warningResult <- debrisConcern(threshold_Pc=warning)
+  falseNegData
+}
 
