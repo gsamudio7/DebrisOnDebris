@@ -5,7 +5,8 @@ events <- fread("data/events.csv")
 debrisConcern <- function(Pc_concern=1e-5,
                           days_to_TCA=5,
                           threshold_Pc=1e-7,
-                          number_of_fragments=1) {
+                          number_of_fragments=1,
+                          verbose=FALSE) {
   
   # Function that takes as input:
   ## days to TCA
@@ -51,7 +52,8 @@ debrisConcern <- function(Pc_concern=1e-5,
   
   
   # Print update
-  cat(sprintf("%g events of concern\n",length(concernEvents)))
+  if (verbose==TRUE) {
+    cat(sprintf("%g events of concern\n",length(concernEvents)))}
   
   # Create temporary boolean based on events of concern, so we know for all recorded conjunctions, 
   # for all days2TCA when that event results in a collision
@@ -78,11 +80,12 @@ debrisConcern <- function(Pc_concern=1e-5,
                    criticalData[[fragList[[number_of_fragments %>% as.character()]]]] <= threshold_Pc]
   
   # Print results
-  cat(sprintf(
-    "\n\n\nConfusion Matrix:\ntrue positive rate: %g  false positive rate: %g\nfalse negative rate: %g  true negative rate: %g\n",
-    warned[Concern==TRUE,.N]/totalEventCount,warned[Concern==FALSE,.N]/totalEventCount,
-    notWarned[Concern==TRUE,.N]/totalEventCount,notWarned[Concern==FALSE,.N]/totalEventCount))
-  
+  if (verbose==TRUE) {
+    cat(sprintf(
+      "\n\n\nConfusion Matrix:\ntrue positive rate: %g  false positive rate: %g\nfalse negative rate: %g  true negative rate: %g\n",
+      warned[Concern==TRUE,.N]/totalEventCount,warned[Concern==FALSE,.N]/totalEventCount,
+      notWarned[Concern==TRUE,.N]/totalEventCount,notWarned[Concern==FALSE,.N]/totalEventCount))
+  }
   
   return(list("truePositiveRate"=warned[Concern==TRUE,.N]/totalEventCount ,
               "falsePositiveRate"=warned[Concern==FALSE,.N]/totalEventCount ,
