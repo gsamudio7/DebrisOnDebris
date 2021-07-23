@@ -1,3 +1,9 @@
+
+library(data.table)
+library(dplyr)
+library(plotly)
+library(RColorBrewer)
+
 # Read in trimmed data
 events <- fread("data/events.csv")
 
@@ -95,3 +101,4 @@ debrisConcern <- function(Pc_concern=1e-5,
 }
 
 results <- debrisConcern()
+
