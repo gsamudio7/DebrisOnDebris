@@ -6,6 +6,7 @@ debrisConcern <- function(Pc_concern=1e-5,
                           days_to_TCA=5,
                           threshold_Pc=1e-7,
                           number_of_fragments=1) {
+  
   # Function that takes as input:
   ## days to TCA
   ## Number of fragments
@@ -31,27 +32,37 @@ debrisConcern <- function(Pc_concern=1e-5,
     
     events[time2TCA < 1 & 
              
-             events[[fragList[[number_of_fragments %>% as.character()]]]] > Pc_concern,
+    events[[fragList[[number_of_fragments %>% as.character()]]]] > Pc_concern,
            
-           unique(eventNumber)]
+    unique(eventNumber)]
+  
+  nonConcernEvents <- 
+    events[time2TCA < 1 & 
+             
+    events[[fragList[[number_of_fragments %>% as.character()]]]] <= Pc_concern,
+           
+    unique(eventNumber)]
+    
+  totalEventCount <- length(concernEvents) + length(nonConcernEvents)
+  
+  # Verify:
+  events[time2TCA < 1 & is.na(events[[fragList[[number_of_fragments %>% as.character()]]]]),
+         uniqueN(eventNumber)] + totalEventCount == events[time2TCA < 1,uniqueN(eventNumber)]
+  
   
   # Print update
-  cat(sprintf("Found %g events of concern\n",length(concernEvents)))
+  cat(sprintf("%g events of concern\n",length(concernEvents)))
   
   # Create temporary boolean based on events of concern, so we know for all recorded conjunctions, 
   # for all days2TCA when that event results in a collision
   events[,"Concern" := as.factor(eventNumber %in% concernEvents)]
   
   # Get the event numbers that have at least the input days to TCA
-  criticalEvents <- events[time2TCA > days_to_TCA,unique(eventNumber)]
+  criticalEvents <- events[time2TCA > days_to_TCA,
+                           unique(eventNumber)]
   
   # Screen data to only these event numbers
   criticalData <- events[eventNumber %in% criticalEvents]
-  
-  # Print update
-  cat(sprintf("Found %g events with at least %g days to TCA\n",
-              length(criticalEvents), 
-              days_to_TCA))
   
   # Get the data for events with a Pc above the given threshold on the given days to TCA
   warned <- 
@@ -68,13 +79,15 @@ debrisConcern <- function(Pc_concern=1e-5,
   
   # Print results
   cat(sprintf(
-    "\n\n\nConfusion Matrix:\ntrue positive: %g  false positive: %g\nfalse negative: %g  true negative: %g\n",
-    warned[Concern==TRUE,.N],warned[Concern==FALSE,.N],
-    notWarned[Concern==TRUE,.N],notWarned[Concern==FALSE,.N]))
+    "\n\n\nConfusion Matrix:\ntrue positive rate: %g  false positive rate: %g\nfalse negative rate: %g  true negative rate: %g\n",
+    warned[Concern==TRUE,.N]/totalEventCount,warned[Concern==FALSE,.N]/totalEventCount,
+    notWarned[Concern==TRUE,.N]/totalEventCount,notWarned[Concern==FALSE,.N]/totalEventCount))
   
   
-  return(list("truePositive"=warned[Concern==TRUE,.N],
-              "falsePositive"=warned[Concern==FALSE,.N],
-              "falseNegative"=notWarned[Concern==TRUE,.N],
-              "trueNegative"=notWarned[Concern==FALSE,.N]))
+  return(list("truePositiveRate"=warned[Concern==TRUE,.N]/totalEventCount ,
+              "falsePositiveRate"=warned[Concern==FALSE,.N]/totalEventCount ,
+              "falseNegativeRate"=notWarned[Concern==TRUE,.N]/totalEventCount ,
+              "trueNegativeRate"=notWarned[Concern==FALSE,.N]/totalEventCount))
 }
+
+results <- debrisConcern()
