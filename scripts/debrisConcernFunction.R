@@ -9,6 +9,7 @@ debrisConcern <- function(Pc_concern=1e-5,
                           verbose=FALSE) {
   
   # Function that takes as input:
+  ## Pc threshold of concern
   ## days to TCA
   ## Number of fragments
   ## Threshold Prob of Collision 
