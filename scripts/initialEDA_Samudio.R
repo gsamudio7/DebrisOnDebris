@@ -9,9 +9,14 @@ events <- fread("data/events.csv")
 # Make boolean column of collision or not
 # First get the eventNumbers that result in a collision:
 collisionEvents <- events[time2TCA < 1,unique(eventNumber)]
-length(collisionEvents) # 70609
+length(collisionEvents) # 70609 events result in a collision
 
+# Create boolean based on collision events, so we know for all recorded conjunctions, 
+# for all days2TCA when that event results in a collision
+events[,"Collision" := as.factor(eventNumber %in% collisionEvents)]
 
+# Save and push to Git
+fwrite(events,"events.csv")
 
 # Function that takes as input:
 ## days to TCA
@@ -26,19 +31,45 @@ length(collisionEvents) # 70609
 
 # Organize inputs:
 days_to_TCA <- 5
-threshold_Pc <- 1e-3
-number_of_fragments <- 10
+threshold_Pc <- 0.00000001
+number_of_fragments <- 1 %>% as.character()
 
 # Screen data:
 # Get the event numbers that have at least the input days to TCA
-criticalEvents <- events[time2TCA > 5,unique(eventNumber)]
+criticalEvents <- events[time2TCA > days_to_TCA,unique(eventNumber)]
 
+# Screen data to only these event numbers
+criticalData <- events[eventNumber %in% criticalEvents]
+
+# Print update
 cat(sprintf("Found %g events with at least %g days to TCA\n",
         length(criticalEvents), 
         days_to_TCA))
 
-# Find the 
+# Find the number of events warned that result in a collision
+fragList <- list("1"="PcBest",
+                 "10"="PcFrag10",
+                 "100"="PcFrag100",
+                 "1000"="PcFrag1000",
+                 "10000"="PcFrag10000")
 
+# Get the data for events with a Pc above the given threshold on the given days to TCA
+warned <- 
+  # On the given days to TCA
+  criticalData[time2TCA > days_to_TCA & time2TCA <= round(days_to_TCA) + 1 &
+  
+  # Get the conjunctions above the threshold Pc
+  criticalData[[fragList[[number_of_fragments]]]] > threshold_Pc]
+
+# Here get the opposite
+notWarned <- 
+  criticalData[time2TCA > days_to_TCA & time2TCA <= round(days_to_TCA) + 1 &
+  criticalData[[fragList[[number_of_fragments]]]] <= threshold_Pc]
+
+warned[Collision==TRUE,.N]
+warned[Collision==FALSE,.N]
+notWarned[Collision==TRUE,.N]
+notWarned[Collision==FALSE,.N]
 
 
 
