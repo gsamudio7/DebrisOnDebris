@@ -6,6 +6,8 @@ library(rlang)
 events <- read_csv("data/events.csv") %>% 
   mutate(PcFrag10000 = as.numeric(PcFrag10000))
 
+tca_notice_threshold  = 5 #threshold for days to notification
+
 event_summary <- events %>% 
   lazy_dt() %>% 
   filter(time2TCA < tca_notice_threshold) %>% 
@@ -23,8 +25,7 @@ event_summary <- events %>%
 
 #this function allows us to get a confusion matrix with static data, but with uncertain collision if desired.
 #We could add bootstrapping to it in the future if desired.
-debris_cm <- function(sim_num = 1, tca_notice_threshold  = 5, Pc_threshold = .000001, collision_prob = .00015 , Frag_considered = "100" ) {
-# tca_notice_threshold  = 5   #earliest day to get notifed
+debris_cm <- function(sim_num = 1, Pc_threshold = .000001, collision_prob = .00015 , Frag_considered = "100" ) {
 # Pc_threshold = .000001        #this is the level the decision maker sets for notification
 # collision_prob = .00015     #this will end up being a probability pull
 # Frag_considered = "100"      #which category we are looking at
