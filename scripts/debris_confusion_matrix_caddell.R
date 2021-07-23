@@ -31,26 +31,32 @@ collision_sim <- runif(n = nrow(event_summary), min = 0, max = 1)
 
 final <- event_summary %>% 
   mutate(warning_issued = Pc_max >= Pc_threshold, #warning issued if Pc ever breaks threshold
-         #collision_prob = collision_sim[row_number()], #you can comment this on/off
+         collision_prob = collision_sim[row_number()], #you can comment this on/off
          collision = Pc_last >= collision_prob, #collision_prob should be calculated every time in the future
          true_pos = warning_issued & collision,
          true_neg = !warning_issued & !collision,
          false_pos = warning_issued & !collision,
          false_neg = !warning_issued & collision) %>% 
   summarise(total_warnings = sum(warning_issued),
-            total_collsions = sum(collision),
-            true_pos_rate = sum(true_pos, na.rm = TRUE)/total_collsions,
-            true_neg_rate = sum(true_neg, na.rm = TRUE)/(n()-total_collsions),
-            false_pos_rate = sum(false_pos, na.rm = TRUE)/total_collsions,
-            false_neg_rate = sum(false_neg, na.rm = TRUE)/(n()-total_collsions))
+            total_collisions = sum(collision),
+            true_pos_rate = sum(true_pos, na.rm = TRUE)/total_collisions,
+            true_neg_rate = sum(true_neg, na.rm = TRUE)/(n()-total_collisions),
+            false_pos_rate = sum(false_pos, na.rm = TRUE)/total_collisions,
+            false_neg_rate = sum(false_neg, na.rm = TRUE)/(n()-total_collisions))
 
 return(final)
 }
 
 #run the model several times
-sim <- vector(mode = 'list', length = 10) %>% 
+sim <- vector(mode = 'list', length = 1000) %>% 
   lapply(debris_cm)%>% 
   bind_rows()
 
 sim
 
+ggplot(sim, aes(total_warnings, total_collisions))+
+  geom_point()
+
+ggplot(sim, aes(total_collisions))+
+  geom_histogram()+
+  theme_minimal()
