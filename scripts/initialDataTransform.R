@@ -9,19 +9,27 @@ library(data.table)
 library(dplyr)
 library(fst)
 
-# Read in the raw data
-debrisData <- fread("data/DebrisOnDebris3.txt")
-dim(debrisData) # 707188 rows and 58 columns
+########################################
+# This part completed - do not re run 
+# DebrisOnDebris3.txt not in repo 
 
-# Write and compress to store in Git repo
-write_fst(debrisData, "data/DebrisOnDebris3.fst", compress = 100)
+# # Read in the raw data
+# debrisData <- fread("data/DebrisOnDebris3.txt")
+# dim(debrisData) # 707188 rows and 58 columns
+# 
+# # Write and compress to store in Git repo
+# write_fst(debrisData, "data/DebrisOnDebris3.fst", compress = 100)
 
 # Now entire data set is compressed and can be stored in Git repo
+###########################################
+
+#############################################
+# Data transform begins here from .fst file 
+#############################################
 
 # Read in .fst file and convert to data.table for fast compute
 events <- read_fst("data/DebrisOnDebris3.fst") %>% data.table()
 dim(events) # 707188/58 -> no loss of data
-
 
 # Transform data to only the relevant columns (based on Mr. Hejduk's guidance)
 events <- events[,c(1,2,3,11,14,15,16,17,45,46,58)]
