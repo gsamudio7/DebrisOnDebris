@@ -45,8 +45,8 @@ final <- event_summary %>%
             total_collisions = sum(collision),
             true_pos_rate = sum(true_pos)/total_collisions,
             true_neg_rate = sum(true_neg)/(n()-total_collisions),
-            false_pos_rate = 1-true_pos_rate,
-            false_neg_rate = 1-true_neg_rate)
+            false_pos_rate = 1-true_neg_rate,
+            false_neg_rate = 1-true_pos_rate)
 
 return(final)
 }
