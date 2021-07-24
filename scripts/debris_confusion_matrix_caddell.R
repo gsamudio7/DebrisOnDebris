@@ -26,7 +26,7 @@ event_summary <- events %>%
 
 #this function allows us to get a confusion matrix with static data, but with uncertain of collision if desired.
 #We could add bootstrapping to it in the future if desired.
-debris_cm <- function(sim_num = 1, Pc_threshold = .000001, collision_prob = .00015) {
+debris_cm <- function(Pc_threshold = .000001, collision_prob = .00015, sim_num = 1) {
 # Pc_threshold = .000001        #this is the level the decision maker sets for notification
 # collision_prob = .00015     #this will end up being a probability pull
 
@@ -35,7 +35,7 @@ collision_sim <- runif(n = nrow(event_summary), min = 0, max = 1)
 final <- event_summary %>% 
   na.omit() %>% 
   mutate(warning_issued = Pc_max >= Pc_threshold, #warning issued if Pc ever breaks threshold
-         collision_prob = collision_sim[row_number()], #you can comment this on/off
+         #collision_prob = collision_sim[row_number()], #you can comment this on/off
          collision = Pc_last >= collision_prob, #collision_prob should be calculated every time in the future
          true_pos = warning_issued & collision,
          true_neg = !warning_issued & !collision,
@@ -43,10 +43,11 @@ final <- event_summary %>%
          false_neg = !warning_issued & collision) %>% 
   summarise(total_warnings = sum(warning_issued),
             total_collisions = sum(collision),
+            Pc_threshold = Pc_threshold,
             true_pos_rate = sum(true_pos)/total_collisions,
             true_neg_rate = sum(true_neg)/(n()-total_collisions),
-            false_pos_rate = 1-true_neg_rate,
-            false_neg_rate = 1-true_pos_rate)
+            false_pos_rate = sum(false_pos)/(n()-total_collisions),
+            false_neg_rate = sum(false_neg)/(total_collisions))
 
 return(final)
 }
@@ -63,7 +64,7 @@ ggplot(sim, aes(total_warnings, total_collisions))+
   theme_minimal()
 
 ggplot(sim, aes(total_collisions))+
-  geom_histogram()+
+  geom_histogram(binwidth = .5)+
   theme_minimal()
 
 ggplot(sim, aes(true_neg_rate, false_neg_rate))+
@@ -73,3 +74,17 @@ ggplot(sim, aes(true_neg_rate, false_neg_rate))+
 ggplot(sim, aes(true_pos_rate, false_pos_rate))+
   geom_point()+
   theme_minimal()
+
+#ROC development
+Pc_thresholds <- data.frame(Pcthreshold = seq(from = .00000001, to = .01, by = .00001))
+roc_data <- pmap_dfr(list(Pc_thresholds[1:100,]), debris_cm)
+
+roc_data %>% 
+  add_row(false_pos_rate = 0, true_pos_rate = 0) %>% 
+  add_row(false_pos_rate = 1, true_pos_rate = 1) %>% #so the line starts at 0,0 and goes to 1,1
+  arrange(false_pos_rate, true_pos_rate) %>% 
+  ggplot(aes(x = false_pos_rate, y = true_pos_rate))+
+  geom_line()
+
+roc_data %>% 
+  summarise(sum(total_collisions))
