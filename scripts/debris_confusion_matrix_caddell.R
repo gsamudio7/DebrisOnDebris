@@ -76,15 +76,21 @@ ggplot(sim, aes(true_pos_rate, false_pos_rate))+
   theme_minimal()
 
 #ROC development
-Pc_thresholds <- data.frame(Pcthreshold = seq(from = .00000001, to = .01, by = .00001))
+#creates a range of thresholds to test
+Pc_thresholds <- data.frame(Pcthreshold = seq(from = .00000000000000000001, to = .000000001, by = .00000000001))
+
+#runs the model with the different thresholds
 roc_data <- pmap_dfr(list(Pc_thresholds[1:100,]), debris_cm)
 
+#draws ROC curve
 roc_data %>% 
   add_row(false_pos_rate = 0, true_pos_rate = 0) %>% 
   add_row(false_pos_rate = 1, true_pos_rate = 1) %>% #so the line starts at 0,0 and goes to 1,1
   arrange(false_pos_rate, true_pos_rate) %>% 
   ggplot(aes(x = false_pos_rate, y = true_pos_rate))+
-  geom_line()
+  geom_line()+
+  theme_minimal()
 
+#only works if there are collisions. 
 roc_data %>% 
   summarise(sum(total_collisions))
