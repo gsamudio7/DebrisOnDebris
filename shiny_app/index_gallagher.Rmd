@@ -9,9 +9,53 @@ runtime: shiny
 
 ```{r global, include=FALSE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
-library(datasets)
+library(cowplot)
+library(tidyverse)
 library(flexdashboard)
-data(faithful)
+
+
+conf_matrix_plot<-function(df = data_from_function, i){
+mat <-matrix(df[i,2:5],2,2) %>% data.frame() %>%  rename("Benign"= X1, "Malicious" = X2)
+
+data <-matrix(rep(0,12),4,3) %>% data.frame()%>%  rename("Prediction"= X1, "Reference" = X2, "Freq" = X3)
+data$Prediction <- c("Malicious", "Benign", "Malicious","Benign")
+#data$Prediction <- c("Benign", "Malicious", "Benign","Malicious")
+data$Reference <- c("Malicious", "Malicious", "Benign", "Benign")
+data$discript <-c("Correctly Predicted Malicious","Falsely Predicted Benign", "Falsely Predicted Malicious" ,"Correctly Predicted Benign")
+
+#data$Reference <- c("Benign", "Benign", "Malicious", "Malicious")
+data[1,3] <- mat[2,2]
+data[3,3] <- mat[1,2]
+data[2,3] <- mat[2,1]
+data[4,3] <- mat[1,1]
+data <-data %>% 
+  mutate(Prediction = factor(Prediction, levels = c( "Benign","Malicious")),  #c( "Benign","Malicious")
+                        Reference= factor(Reference, levels = c("Malicious", "Benign")))  # c("Malicious", "Benign")
+
+num_obs <- sum(data$Freq)
+num_ben <- sum(data[3,3]+ data[4,3])
+num_mal <- sum(data[1,3] + data[2,3])
+
+data <- data  %>%group_by(Reference) %>% 
+  mutate(
+    total = sum(Freq),
+    frac_fill = if_else(Prediction == Reference, Freq / total, 0),
+    frac = Freq / num_obs) %>% 
+  ungroup() %>% 
+  mutate(dist = ifelse(Reference == "Malicious", Freq/num_mal, Freq/num_ben )) 
+
+
+  ggplot(data,aes(Prediction,Reference,fill = frac)) +
+  geom_tile() +
+  scale_fill_gradient(low = "#FFFFFF", high = "#0d4077",guide = FALSE) +
+  scale_x_discrete(position = "top") +
+  geom_text(aes(color = frac>0.1,label = str_c(discript,"\n",comma(Freq),"\n ", round(frac * 100,2), "% of all Observations \n", round(dist *100,2), "% of True ", Reference  )), size = 6)+
+  scale_color_manual(values=c("#000000", "#FFFFFF"),guide = FALSE)+
+  geom_tile(color = "black", fill = "black", alpha = 0)+
+  theme_cowplot()+
+    theme(axis.text=element_text(size=16),
+          axis.title=element_text(size=16,face="bold"))
+}
 ```
 
 Column {.sidebar} {data-width=250}
@@ -33,9 +77,27 @@ sliderInput("DaysTCA", label = "Days to TCA",
 sliderInput("PcThresh", label = "Pc Threshold",
             min = 1e-10, max = 1e-2,, value = 1e-5, step =1e-4)
 
-textInput("inputId", "Concern Category A", 1e-3)
-textInput("inputId", "Concern Category B", 1e-4)
-textInput("inputId", "Concern Category C", 1e-5)
+textInput("inputA", "Concern Category A", 1e-3)
+textInput("inputB", "Concern Category B", 1e-4)
+textInput("inputC", "Concern Category C", 1e-5)
+
+
+
+# source("./scripts/debrisConcernFunction.R")
+# 
+# debrisConcern(Pc_concern=c(inputA,inputB,inputC),
+#                           days_to_TCA=DaysTCA,
+#                           threshold_Pc=PcThresh,
+#                           number_of_fragments=NumFrags,
+#                           verbose=FALSE)
+
+# This datatframe needs be an output of debrisConcern just dummy data at this time
+data_from_function <- data.frame(
+  name = c("Cat_A", "Cat_B", "Cat_C"),
+  true_neg = c(5005,4242,14214),
+  false_neg = c(4214,32542,3),
+  false_pos = c(3253,253,32523),
+  true_pos = c(1,646,6346))
 
 ```
 
@@ -44,59 +106,21 @@ Column
 ### Concern Category A 
 
 ```{r}
-library(dplyr)
-library(tidymodels)
-data("hpc_cv")
-
-# The confusion matrix from a single assessment set (i.e. fold)
-cm <- hpc_cv %>%
-  filter(Resample == "Fold01") %>%
-  conf_mat(obs, pred)
-
-library(purrr)
-library(tidyr)
-
-cells_per_resample <- hpc_cv %>%
-  group_by(Resample) %>%
-  conf_mat(obs, pred) %>%
-  mutate(tidied = map(conf_mat, tidy)) %>%
-  unnest(tidied)
-
-# Get the totals per resample
-counts_per_resample <- hpc_cv %>%
-  group_by(Resample) %>%
-  summarize(total = n()) %>%
-  left_join(cells_per_resample, by = "Resample") %>%
-  # Compute the proportions
-  mutate(prop = value/total) %>%
-  group_by(name) %>%
-  # Average
-  summarize(prop = mean(prop))
-
-
-# Now reshape these into a matrix
-mean_cmat <- matrix(counts_per_resample$prop, byrow = TRUE, ncol = 4)
-rownames(mean_cmat) <- levels(hpc_cv$obs)
-colnames(mean_cmat) <- levels(hpc_cv$obs)
-
-
-
-# The confusion matrix can quickly be visualized using autoplot()
-library(ggplot2)
-
-autoplot(cm, type = "heatmap")
-
+renderPlot({
+conf_matrix_plot(data_from_function, 1)})
 
 ```
     
 ### Concern Category B 
 
 ```{r}
-autoplot(cm, type = "heatmap")
+renderPlot({
+conf_matrix_plot(data_from_function, 2)})
 ```
 
 ### Concern Category C 
 
 ```{r}
-autoplot(cm, type = "heatmap")
+renderPlot({
+conf_matrix_plot(data_from_function, 3)})
 ```
