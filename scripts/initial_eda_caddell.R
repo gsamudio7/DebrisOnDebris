@@ -58,7 +58,7 @@ event_summary <- events %>%
 event_summary %>% 
   filter(observations > 1) %>% 
 ggplot(aes(x = PcBest_range))+
-  geom_histogram(bins = 10)+
+  geom_histogram(binwidth = .00001)+
   theme_minimal()
 
 event_summary %>% 
