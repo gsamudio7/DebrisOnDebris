@@ -1,5 +1,6 @@
 library(tidyverse)
 library(ggthemes)
+library(dtplyr)
 
 events <- read_csv("data/events.csv") %>% 
   mutate(PcFrag10000 = as.numeric(PcFrag10000))
@@ -24,30 +25,49 @@ events %>%
   scale_x_reverse()+
   theme_minimal()
 
+tca_of_concern <- 5
+
 event_summary <- events %>% 
+  filter(time2TCA < 5) %>% 
   group_by(eventNumber) %>% 
   summarize(observations= n(), 
-            last_notice = min(TCA - time_of_screening), 
-            first_notice = max(TCA - time_of_screening),
+            last_notice = min(time2TCA), 
+            first_notice = max(time2TCA),
             PcBest_max = max(PcBest),
             PcBest_min= min(PcBest),
-            PcBest_at_last_notice = PcBest[which.max(time_of_screening)],
+            PcBest_at_last_notice = PcBest[which.min(time2TCA)],
+            PcBest_at_tca_of_concern = PcBest[which.max(time2TCA)],
+            PcBest_range = PcBest_at_tca_of_concern - PcBest_at_last_notice,
             PcFrag10_max = max(PcFrag10),
             PcFrag10_min= min(PcFrag10),
-            PcFrag10_at_last_notice = PcFrag10[which.max(time_of_screening)],
+            PcFrag10_at_last_notice = PcFrag10[which.min(time2TCA)],
             PcFrag100_max = max(PcFrag100),
             PcFrag100_min= min(PcFrag100),
-            PcFrag100_at_last_notice = PcFrag100[which.max(time_of_screening)],
+            PcFrag100_at_last_notice = PcFrag100[which.min(time2TCA)],
             PcFrag1000_max = max(PcFrag1000),
             PcFrag1000_min= min(PcFrag1000),
-            PcFrag1000_at_last_notice = PcFrag1000[which.max(time_of_screening)],
+            PcFrag1000_at_last_notice = PcFrag1000[which.min(time2TCA)],
             PcFrag10000_max = max(as.numeric(PcFrag10000)),
             PcFrag10000_min= min(as.numeric(PcFrag10000)),
-            PcFrag10000_at_last_notice = as.numeric(PcFrag10000[which.max(time_of_screening)]),
+            PcFrag10000_at_last_notice = as.numeric(PcFrag10000[which.min(time2TCA)]),
             days_tracked = first_notice - last_notice,
             TCA = min(TCA),
             single_notice = as.factor(if_else(first_notice == last_notice, "Single Notice", "Multiple-Notices"))) %>% 
   unique()
+
+event_summary %>% 
+  filter(observations > 1) %>% 
+ggplot(aes(x = PcBest_range))+
+  geom_histogram(bins = 10)+
+  theme_minimal()
+
+event_summary %>% 
+  filter(observations > 1) %>% 
+  ggplot(aes(x = PcBest_range))+
+  geom_density()+
+  scale_x_continuous(limits = c(-.00001, .00001))+
+  theme_minimal()
+
 
 ggplot(event_summary, aes(x = days_tracked))+
   geom_density(adjust = 2)+
@@ -59,7 +79,7 @@ ggplot(event_summary, aes(last_notice))+
 
 #60% of events appear to stop being of concern before the 2.5 day mark
 event_summary %>% 
-  summarise(stopped_tracking = sum(last_notice > 2.5, na.rm = TRUE), stopped_tracking_PcBestt = stopped_tracking/n())
+  summarise(stopped_tracking = sum(last_notice > 2.5, na.rm = TRUE), stopped_tracking_PcBest = stopped_tracking/n())
 
 
 #only 11 events contain a PcBest_at_last > .0001 within the 5 day mark ... that's .005% of the dataset
