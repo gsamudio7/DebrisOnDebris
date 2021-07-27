@@ -77,7 +77,9 @@ ggplot(sim, aes(true_pos_rate, false_pos_rate))+
 
 #ROC development
 #creates a range of thresholds to test
-Pc_thresholds <- data.frame(Pcthreshold = seq(from = .00000000000000000001, to = .000000001, by = .00000000001))
+#Pc_thresholds <- data.frame(Pcthreshold = seq(from = .00000000000000000001, to = .0000001, by = .000000001))
+Pc_thresholds <- data.frame(Pcthreshold = c(.0000001, .0000001, .000001, .00001, .0001, .001, .01))
+
 
 #runs the model with the different thresholds
 roc_data <- pmap_dfr(list(Pc_thresholds[1:100,]), debris_cm)

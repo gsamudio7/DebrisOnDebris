@@ -56,6 +56,11 @@ event_summary <- events %>%
   unique()
 
 event_summary %>% 
+  filter(last_notice <= 1,
+         PcBest_at_last_notice > .00001) %>% 
+  count()
+
+event_summary %>% 
   filter(observations > 1) %>% 
 ggplot(aes(x = PcBest_range))+
   geom_histogram(binwidth = .00001)+
