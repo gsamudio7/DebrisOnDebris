@@ -7,8 +7,80 @@ library(RColorBrewer)
 # Read in trimmed data
 events <- fread("data/events.csv")
 
+# Get the events of concern with Pc_concern = 1e-3
+Pc_concern <- 1e-5
+
+concernSummary <- events[!is.na(PcBest),
+  .(bool=time2TCA==min(time2TCA) & time2TCA < 1,
+    PcBest=PcBest),
+  by=eventNumber][bool==TRUE,!"bool"] 
+
+# Include the PcBest values at 5 days to TCA
+concernSummary_at_5 <- events[!is.na(PcBest) &
+  eventNumber %in% concernSummary$eventNumber & 
+  time2TCA <= 5 & time2TCA > 4,.(PcBest_at_5=PcBest,
+                                 bool=time2TCA==max(time2TCA)),by=eventNumber][bool==TRUE,!"bool"] %>%
+
+  merge.data.table(concernSummary,by="eventNumber")
+
+
+# Count total positives (events of concern) that we have visibility on at 5 days out
+P_at_5 <- concernSummary_at_5[PcBest >= Pc_concern,.N] # 22
+N_at_5 <- concernSummary_at_5[PcBest < Pc_concern,.N] # 29322
+
+P <- concernSummary[PcBest >= Pc_concern,.N] # 58
+N <- concernSummary[PcBest < Pc_concern,.N] # 48193
+
+# Count false negatives (PcBest_at_5 < Pc_warn and PcBest >= Pc_concern) if we use naive approach (risk averse)
+Pc_warn <- concernSummary_at_5[PcBest >= Pc_concern,min(PcBest_at_5)]
+
+# Produce confusion matrix
+debrisConfusion <- function(Pc_warn,Pc_concern=1e-5,verbose=FALSE) {
+  TPR <- concernSummary_at_5[PcBest >= Pc_concern & PcBest_at_5 >= Pc_warn,.N]/P
+  FPR <- concernSummary_at_5[PcBest < Pc_concern & PcBest_at_5 >= Pc_warn,.N]/N
+  TNR <- concernSummary_at_5[PcBest < Pc_concern & PcBest_at_5 < Pc_warn,.N]/N
+  FNR <- concernSummary_at_5[PcBest >= Pc_concern & PcBest_at_5 < Pc_warn,.N]/P
+  if (verbose==TRUE) {
+    cat(sprintf(
+      "Pc_warn: %g\nPc_concern: %g\n\nTPR: %g | FPR: %g \nTNR: %g | FNR: %g",
+      Pc_warn,Pc_concern,TPR,FPR,TNR,FNR)
+    )
+  }
+  return(data.table("Warn_Threshold"=c(Pc_warn,Pc_warn),
+                    "Rate"=c(FNR,FPR),
+                    "Rate Type"=c("False Negative Rate",
+                                  "False Positive Rate"))
+  )
+}
+
+# Use min (risk averse)
+debrisConfusion(Pc_warn=Pc_warn)
+
+# Use max (risk tolerant)
+debrisConfusion(Pc_warn=concernSummary_at_5[PcBest >= Pc_concern,max(PcBest_at_5)])
+
+# Get data for a range of values
+rates <- lapply(
+  seq(from=1e-9,
+      to=1e-4,
+      by=1e-7),
+  debrisConfusion) %>% rbindlist()
+
+
+# Plot
+rates %>%
+  plot_ly(
+    type="scatter",
+    mode="lines",
+    x=~log(Warn_Threshold),
+    y=~Rate,
+    color=~`Rate Type`
+  )
+
+
+
 # Define function
-debrisConcern <- function(Pc_concern=c(1e-3,1e-4,1e-5),
+debrisConcern <- function(Pc_concern_vector=c(1e-3,1e-4,1e-5),
                           days_to_TCA=5,
                           threshold_Pc=1e-7,
                           number_of_fragments=1,
@@ -43,26 +115,14 @@ debrisConcern <- function(Pc_concern=c(1e-3,1e-4,1e-5),
     # Make boolean column of collision or not
     # First get the eventNumbers that result in a collision:
     concernEvents <- 
-      
-      events[time2TCA < 1 & 
-               
-      events[[fragList[[number_of_fragments %>% as.character()]]]] > Pc,
-             
-      unique(eventNumber)]
+      events[min(time2TCA) < 1 & 
+      events[[fragList[[number_of_fragments %>% as.character()]]]] <= Pc,
+      eventNumber]
     
     nonConcernEvents <- 
-      events[time2TCA < 1 & 
-               
-      events[[fragList[[number_of_fragments %>% as.character()]]]] <= Pc,
-             
-      unique(eventNumber)]
-      
-    totalEventCount <- length(concernEvents) + length(nonConcernEvents)
-    
-    # Verify:
-    events[time2TCA < 1 & is.na(events[[fragList[[number_of_fragments %>% as.character()]]]]),
-           uniqueN(eventNumber)] + totalEventCount == events[time2TCA < 1,uniqueN(eventNumber)]
-    
+      events[min(time2TCA) < 1 & 
+      events[[fragList[[number_of_fragments %>% as.character()]]]] > Pc,
+      eventNumber]
     
     # Print update
     if (verbose==TRUE) {
