@@ -7,7 +7,7 @@ library(RColorBrewer)
 # Read in trimmed data
 events <- fread("data/events.csv")
 
-# Get the events of concern with Pc_concern = 1e-3
+# Get the events of concern with Pc_concern = 1e-5
 Pc_concern <- 1e-5
 
 concernSummary <- events[!is.na(PcBest),
@@ -15,11 +15,13 @@ concernSummary <- events[!is.na(PcBest),
     PcBest=PcBest),
   by=eventNumber][bool==TRUE,!"bool"] 
 
-# Include the PcBest values at 5 days to TCA
-concernSummary_at_5 <- events[!is.na(PcBest) &
+# Include the PcBest values at given days to TCA
+concernSummary_at_TOI <- events[!is.na(PcBest) &
   eventNumber %in% concernSummary$eventNumber & 
-  time2TCA <= 5 & time2TCA > 4,.(PcBest_at_5=PcBest,
-                                 bool=time2TCA==max(time2TCA)),by=eventNumber][bool==TRUE,!"bool"] %>%
+  time2TCA <= days_to_TCA & time2TCA > days_to_TCA - 1,
+  .(PcBest_at_5=PcBest,
+    bool=time2TCA==max(time2TCA)),
+  by=eventNumber][bool==TRUE,!"bool"] %>%
 
   merge.data.table(concernSummary,by="eventNumber")
 
@@ -35,11 +37,24 @@ N <- concernSummary[PcBest < Pc_concern,.N] # 48193
 Pc_warn <- concernSummary_at_5[PcBest >= Pc_concern,min(PcBest_at_5)]
 
 # Produce confusion matrix
-debrisConfusion <- function(Pc_warn,Pc_concern=1e-5,verbose=FALSE) {
-  TPR <- concernSummary_at_5[PcBest >= Pc_concern & PcBest_at_5 >= Pc_warn,.N]/P
-  FPR <- concernSummary_at_5[PcBest < Pc_concern & PcBest_at_5 >= Pc_warn,.N]/N
-  TNR <- concernSummary_at_5[PcBest < Pc_concern & PcBest_at_5 < Pc_warn,.N]/N
-  FNR <- concernSummary_at_5[PcBest >= Pc_concern & PcBest_at_5 < Pc_warn,.N]/P
+debrisConfusion <- function(Pc_warn,days_to_TCA,Pc_concern=1e-5,verbose=FALSE) {
+  
+  # Include the PcBest values at given days to TCA
+  concernSummary_at_TOI <- 
+    events[!is.na(PcBest) & 
+    eventNumber %in% concernSummary$eventNumber & 
+    time2TCA <= days_to_TCA & 
+    time2TCA > days_to_TCA - 1,
+      .(PcBest_at_5=PcBest,
+        bool=time2TCA==max(time2TCA)),
+          by=eventNumber][bool==TRUE,!"bool"] %>%
+    
+    merge.data.table(concernSummary,by="eventNumber")
+  
+  TPR <- concernSummary_at_TOI[PcBest >= Pc_concern & PcBest_at_5 >= Pc_warn,.N]/P
+  FPR <- concernSummary_at_TOI[PcBest < Pc_concern & PcBest_at_5 >= Pc_warn,.N]/N
+  TNR <- concernSummary_at_TOI[PcBest < Pc_concern & PcBest_at_5 < Pc_warn,.N]/N
+  FNR <- concernSummary_at_TOI[PcBest >= Pc_concern & PcBest_at_5 < Pc_warn,.N]/P
   if (verbose==TRUE) {
     cat(sprintf(
       "Pc_warn: %g\nPc_concern: %g\n\nTPR: %g | FPR: %g \nTNR: %g | FNR: %g",
@@ -47,14 +62,17 @@ debrisConfusion <- function(Pc_warn,Pc_concern=1e-5,verbose=FALSE) {
     )
   }
   return(data.table("Warn_Threshold"=c(Pc_warn,Pc_warn),
-                    "Rate"=c(FNR,FPR),
+                    "Rate"=c(FNR,FPR,TPR,TNR),
                     "Rate Type"=c("False Negative Rate",
-                                  "False Positive Rate"))
+                                  "False Positive Rate",
+                                  "True Positive Rate",
+                                  "True Negative Rate"))
   )
 }
 
 # Use min (risk averse)
-debrisConfusion(Pc_warn=Pc_warn)
+debrisConfusion(Pc_warn=Pc_warn,
+                days_to_TCA=2)
 
 # Use max (risk tolerant)
 debrisConfusion(Pc_warn=concernSummary_at_5[PcBest >= Pc_concern,max(PcBest_at_5)])
@@ -63,19 +81,31 @@ debrisConfusion(Pc_warn=concernSummary_at_5[PcBest >= Pc_concern,max(PcBest_at_5
 rates <- lapply(
   seq(from=1e-9,
       to=1e-4,
-      by=1e-7),
-  debrisConfusion) %>% rbindlist()
-
+      by=1e-6),
+  debrisConfusion,
+  days_to_TCA=5) %>% rbindlist() %>%
 
 # Plot
-rates %>%
-  plot_ly(
-    type="scatter",
-    mode="lines",
-    x=~log(Warn_Threshold),
-    y=~Rate,
-    color=~`Rate Type`
+  plot_ly(type="scatter",
+          mode="lines",
+          x=~log(Warn_Threshold),
+          y=~Rate,
+          color=~`Rate Type`) %>%
+  layout(title = '<b>5 days to TCA and 1e-5 Concern Probability\nConcern Rates</b>',
+         xaxis = list(title="<b>Warn Threshold</b>",
+                      tickvals = c(-20,-17.5,-15,-12.5,-10),
+                      ticktext = c(-20,-17.5,-15,-12.5,-10) %>% exp() %>% formatC(format="e",digits=2),
+                      tickfont = list(size = 10),
+                      tickangle=45),
+         yaxis = list(title="<b>Rate</b>")
   )
+
+
+
+
+
+
+
 
 
 
