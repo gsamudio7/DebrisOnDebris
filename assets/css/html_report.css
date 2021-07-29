@@ -16,7 +16,7 @@ h1 {
   font-size: 2em;
   border-bottom: 1px solid black;
   font-family: 'RobotoBold', sans-serif;
-  color:  #990000;
+  color:  #222222;
   text-transform: capitalize;
 }
 
@@ -65,7 +65,7 @@ a {
   font-size: 2em;
   font-family: 'Roboto-Light', sans-serif;
   font-size: 1.2em;*/
-  color:  #2359c4;
+  color:  #222222;
 }
 
 
@@ -164,7 +164,7 @@ a {
 .list-group-item.active, .list-group-item.active:focus, .list-group-item.active:hover{
     z-index: 2;
     color: #fff;
-    background-color: #2359c4;
+    background-color: #222222;
 }
 
 .chunk {
@@ -173,7 +173,7 @@ background-color: #E8E8E8;
 
 .nav-tabs>li>a {
   font-size: 1.1em;
-  color: #990000;
+  color: #2359c4;
   margin-right: 2px;
   line-height: 1.42857143;
   border: 1px solid transparent;
