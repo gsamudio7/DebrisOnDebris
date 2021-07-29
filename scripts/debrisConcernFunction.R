@@ -7,9 +7,6 @@ library(RColorBrewer)
 # Read in trimmed data
 events <- fread("data/events.csv")
 
-# Get the events of concern with Pc_concern = 1e-5
-Pc_concernVector <- c(1e-3,1e-4,1e-5)
-
 # Summarize conjunction events of concern for each FragNum
 concernSummary <- rbindlist(list(
   
@@ -117,13 +114,63 @@ save(Pc_at_1_day,file="products/Pc_at_1_day.RData")
 # How does the Pc change as we approach TCA
 events[,"TCA_Bin" := as.factor(ceiling(time2TCA))]
 
-# Include the PcBest values at given days to TCA
-concernSummary_at_TOI <- events[!is.na(PcBest),
+# Include the Pc values at given days to TCA for each fragNum
+# Summarize conjunction events of concern for each FragNum
+concernSummary_at_TOI <- rbindlist(list(
+  
+  # PcBest
+  events[!is.na(PcBest),
+     .(bool=time2TCA==max(time2TCA),
+       fragNum="PcBest",
+       Pc_at_TOI=PcBest),
+     by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
+  
+  # PcFrag10
+  events[!is.na(PcFrag10),
+     .(bool=time2TCA==max(time2TCA),
+       fragNum="PcFrag10",
+       Pc_at_TOI=PcFrag10),
+     by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
+  
+  # PcFrag100
+  events[!is.na(PcFrag100),
+     .(bool=time2TCA==max(time2TCA),
+       fragNum="PcFrag100",
+       Pc_at_TOI=PcFrag100),
+     by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
+  
+  # PcFrag1000
+  events[!is.na(PcFrag1000),
+     .(bool=time2TCA==max(time2TCA),
+       fragNum="PcFrag1000",
+       Pc_at_TOI=PcFrag1000),
+     by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
+  
+  # PcFrag10000
+  events[!is.na(PcFrag10000),
+     .(bool=time2TCA==max(time2TCA),
+       fragNum="PcFrag10000",
+       Pc_at_TOI=PcFrag10000),
+     by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"]
+))
+
+concernSummary_at_TOI[,"fragNum" := as.factor(fragNum)]
+concernSummary_at_TOI[,"Pc_at_TOI" := as.double(Pc_at_TOI)]
+
+# Save and push to Git
+
+
+
+
+
+concernSummary_at_TOI <- events[,
   .(PcBest_at_TOI=PcBest,
     bool=time2TCA==max(time2TCA)),
   by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"] %>%
 
-  merge.data.table(concernSummary[fragNum=="PcBest"],by="eventNumber")
+  merge.data.table(concernSummary,by="eventNumber")
+save(concernSummary_at_TOI,file="data/concernSummary_at_TOI.RData")
+
 
 # How many zeros?
 zeroCount <- merge(
@@ -210,6 +257,29 @@ concernRates <- lapply(
 save(concernRates,file="products/concernRates.RData")
 
 
+# Modified function for shiny app ####
+debrisConfusion_count <- function(concernData,Pc_warn,days_to_TCA,Pc_concern=1e-5,verbose=FALSE) {
+  
+  df <- concernSummary_at_TOI[TCA_Bin==days_to_TCA]
+  
+  TPR <- df[PcBest_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]/P
+  FPR <- df[PcBest_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]/N
+  TNR <- df[PcBest_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]/N
+  FNR <- df[PcBest_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]/P
+  if (verbose==TRUE) {
+    cat(sprintf(
+      "Pc_warn: %g\nPc_concern: %g\n\nTPR: %g | FPR: %g \nTNR: %g | FNR: %g",
+      Pc_warn,Pc_concern,TPR,FPR,TNR,FNR)
+    )
+  }
+  return(data.table("Warn_Threshold"=c(Pc_warn,Pc_warn,Pc_warn,Pc_warn),
+                    "Rate"=c(FNR,FPR,TPR,TNR),
+                    "Rate Type"=c("False Negative Rate",
+                                  "False Positive Rate",
+                                  "True Positive Rate",
+                                  "True Negative Rate"))
+  )
+}
 
 
 
