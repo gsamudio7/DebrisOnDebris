@@ -20,7 +20,6 @@ output:
 }
 
 #TOC {
-  border: None;
   margin-top: 10.5px;
 }
 
