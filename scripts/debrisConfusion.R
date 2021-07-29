@@ -57,16 +57,16 @@ debrisConfusion <- function(concernData_at_TOI,concernData,
 # Function Demo ####
 # Working directory must be DebrisOnDebris project
 
-# # Test 
+# # Test
 # rm(list=ls())
-# 
-# # Read in required data 
+# #
+# # # Read in required data
 # load("data/concernData.RData")
-# 
-# # Read in debrisCounfuction function
+# #
+# # # Read in debrisCounfuction function
 # source("scripts/debrisConfusion.R")
 # 
-# # Execute function for the following inputs
+# # # Execute function for the following inputs
 # results <- debrisConfusion(concernData_at_TOI=concernSummary_at_TOI,
 #                            concernData=concernSummary,
 #                            Pc_warn=2.06e-9,
