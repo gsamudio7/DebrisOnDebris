@@ -158,28 +158,23 @@ concernSummary_at_TOI[,"fragNum" := as.factor(fragNum)]
 concernSummary_at_TOI[,"Pc_at_TOI" := as.double(Pc_at_TOI)]
 
 # Save and push to Git
+save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
 
 
 
 
-
-concernSummary_at_TOI <- events[,
-  .(PcBest_at_TOI=PcBest,
-    bool=time2TCA==max(time2TCA)),
-  by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"] %>%
-
-  merge.data.table(concernSummary,by="eventNumber")
-save(concernSummary_at_TOI,file="data/concernSummary_at_TOI.RData")
 
 
 # How many zeros?
 zeroCount <- merge(
-  concernSummary_at_TOI[PcBest_at_TOI==0,.(Zero_count=.N),by=TCA_Bin],
-  concernSummary_at_TOI[,.(Total=.N),by=TCA_Bin],
-  by="TCA_Bin")
+  concernSummary_at_TOI[Pc_at_TOI==0,.(Zero_count=.N),by=c("TCA_Bin","fragNum")],
+  concernSummary_at_TOI[,.(Total=.N),by=c("TCA_Bin","fragNum")],
+  by=c("TCA_Bin","fragNum")
+)
 zeroCount[,"Proportion" := Zero_count/Total]
 zeroCount <- zeroCount[,!"Total"]
-zeroCount
+zeroCount # Make a pretty plot
+
 
 # Plot
 Pc_by_TCA_plot <- concernSummary_at_TOI %>%
@@ -207,27 +202,58 @@ Pc_concern <- 1e-5
 (N <- concernSummary[fragNum=="PcBest" & Pc_min < Pc_concern,.N]) # 48193
 
 # Produce confusion matrix
-debrisConfusion <- function(Pc_warn,days_to_TCA,Pc_concern=1e-5,verbose=FALSE) {
+debrisConfusion <- function(concernData_at_TOI,concernData,
+                            Pc_warn,
+                            days_to_TCA,
+                            Pc_concern=1e-5,
+                            frag_number_Pc="PcBest",
+                            verbose=FALSE,
+                            rate=TRUE) {
   
-  df <- concernSummary_at_TOI[TCA_Bin==days_to_TCA]
+  df <- merge(
+    concernData_at_TOI[TCA_Bin==days_to_TCA & fragNum==frag_number_Pc,c("eventNumber","Pc_at_TOI")],
+    concernData[fragNum==frag_number_Pc,c("eventNumber","Pc_min")],
+    by="eventNumber"
+  )
   
-  TPR <- df[PcBest_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]/P
-  FPR <- df[PcBest_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]/N
-  TNR <- df[PcBest_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]/N
-  FNR <- df[PcBest_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]/P
+  P <- concernData[fragNum==frag_number_Pc & Pc_min >= Pc_concern,.N] 
+  N <- concernData[fragNum==frag_number_Pc & Pc_min < Pc_concern,.N]
+  
+  if (rate==TRUE) {
+    TPR <- df[Pc_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]/P
+    FPR <- df[Pc_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]/N
+    TNR <- df[Pc_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]/N
+    FNR <- df[Pc_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]/P
+    
+    result_data_table <- data.table("Warn_Threshold"=c(Pc_warn,Pc_warn,Pc_warn,Pc_warn),
+                                    "Rate"=c(FNR,FPR,TPR,TNR),
+                                    "Rate Type"=c("False Negative Rate",
+                                                  "False Positive Rate",
+                                                  "True Positive Rate",
+                                                  "True Negative Rate")
+    )
+    
+  } else {
+    TP <- df[Pc_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]
+    FP <- df[Pc_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]
+    TN <- df[Pc_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]
+    FN <- df[Pc_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]
+    
+    result_data_table <- data.table("Warn_Threshold"=c(Pc_warn,Pc_warn,Pc_warn,Pc_warn),
+                                    "Count"=c(FNR,FPR,TPR,TNR),
+                                    "Type"=c("False Negative",
+                                             "False Positive",
+                                             "True Positive",
+                                             "True Negative")
+    )
+  }
   if (verbose==TRUE) {
     cat(sprintf(
       "Pc_warn: %g\nPc_concern: %g\n\nTPR: %g | FPR: %g \nTNR: %g | FNR: %g",
       Pc_warn,Pc_concern,TPR,FPR,TNR,FNR)
     )
   }
-  return(data.table("Warn_Threshold"=c(Pc_warn,Pc_warn,Pc_warn,Pc_warn),
-                    "Rate"=c(FNR,FPR,TPR,TNR),
-                    "Rate Type"=c("False Negative Rate",
-                                  "False Positive Rate",
-                                  "True Positive Rate",
-                                  "True Negative Rate"))
-  )
+  return(result_data_table)
 }
 
 # Get data for a range of values
@@ -236,6 +262,8 @@ concernRates <- lapply(
       to=1e-4,
       by=1e-6),
   debrisConfusion,
+  concernData_at_TOI=concernSummary_at_TOI,
+  concernData=concernSummary,
   days_to_TCA=5) %>% rbindlist() %>%
 
 # Plot
@@ -257,141 +285,23 @@ concernRates <- lapply(
 save(concernRates,file="products/concernRates.RData")
 
 
-# Modified function for shiny app ####
-debrisConfusion_count <- function(concernData,Pc_warn,days_to_TCA,Pc_concern=1e-5,verbose=FALSE) {
-  
-  df <- concernSummary_at_TOI[TCA_Bin==days_to_TCA]
-  
-  TPR <- df[PcBest_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]/P
-  FPR <- df[PcBest_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]/N
-  TNR <- df[PcBest_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]/N
-  FNR <- df[PcBest_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]/P
-  if (verbose==TRUE) {
-    cat(sprintf(
-      "Pc_warn: %g\nPc_concern: %g\n\nTPR: %g | FPR: %g \nTNR: %g | FNR: %g",
-      Pc_warn,Pc_concern,TPR,FPR,TNR,FNR)
-    )
-  }
-  return(data.table("Warn_Threshold"=c(Pc_warn,Pc_warn,Pc_warn,Pc_warn),
-                    "Rate"=c(FNR,FPR,TPR,TNR),
-                    "Rate Type"=c("False Negative Rate",
-                                  "False Positive Rate",
-                                  "True Positive Rate",
-                                  "True Negative Rate"))
-  )
-}
+# Function Demo ####
 
+# Test 
+rm(list=ls())
 
+# Read in required data 
+load("data/concernData.RData")
 
+# Read in debrisCounfuction function
+source("scripts/debrisConfusion.R")
 
-
-# Define function
-debrisConcern <- function(Pc_concern_vector=c(1e-3,1e-4,1e-5),
-                          days_to_TCA=5,
-                          threshold_Pc=1e-7,
-                          number_of_fragments=1,
-                          verbose=TRUE) {
-  
-  # Function that takes as input:
-  ## Pc threshold of concern
-  ## days to TCA
-  ## Number of fragments
-  ## Threshold Prob of Collision 
-  
-  # and gives output:
-  ## number of events warned that resulted in a collision
-  ## number of events warned that did not result in a collision
-  ## number of events not warned that resulted in a collision
-  ## number of events not warned that did not result in a collision
-  
-  
-  # Look up table for Pc types
-  fragList <- list("1"="PcBest",
-                   "10"="PcFrag10",
-                   "100"="PcFrag100",
-                   "1000"="PcFrag1000",
-                   "10000"="PcFrag10000")
-  
-  # Initiate results list
-  resultsList <- list()
-  
-  # Iterate through Pc_concern values
-  for (Pc in Pc_concern) {
-  
-    # Make boolean column of collision or not
-    # First get the eventNumbers that result in a collision:
-    concernEvents <- 
-      events[min(time2TCA) < 1 & 
-      events[[fragList[[number_of_fragments %>% as.character()]]]] <= Pc,
-      eventNumber]
-    
-    nonConcernEvents <- 
-      events[min(time2TCA) < 1 & 
-      events[[fragList[[number_of_fragments %>% as.character()]]]] > Pc,
-      eventNumber]
-    
-    # Print update
-    if (verbose==TRUE) {
-      cat(sprintf("%g events of concern\n",length(concernEvents)))}
-    
-    # Create temporary boolean based on events of concern, so we know for all recorded conjunctions, 
-    # for all days2TCA when that event results in a collision
-    events[,"Concern" := as.factor(eventNumber %in% concernEvents)]
-    
-    # Get the event numbers that have at least the input days to TCA
-    criticalEvents <- events[time2TCA > days_to_TCA,
-                             unique(eventNumber)]
-    
-    # Screen data to only these event numbers
-    criticalData <- events[eventNumber %in% criticalEvents]
-    
-    # Get the data for events with a Pc above the given threshold on the given days to TCA
-    warned <- 
-      # On the given days to TCA
-      criticalData[time2TCA > days_to_TCA & time2TCA <= round(days_to_TCA) + 1 &
-                     
-                     # Get the conjunctions above the threshold Pc
-                     criticalData[[fragList[[number_of_fragments %>% as.character()]]]] > threshold_Pc]
-    
-    # Here get the opposite
-    notWarned <- 
-      criticalData[time2TCA > days_to_TCA & time2TCA <= round(days_to_TCA) + 1 &
-                     criticalData[[fragList[[number_of_fragments %>% as.character()]]]] <= threshold_Pc]
-    
-    # Print results
-    if (verbose==TRUE) {
-      cat(sprintf(
-        "\n\n\nConfusion Matrix:\ntrue positive rate: %g  false positive rate: %g\nfalse negative rate: %g  true negative rate: %g\n",
-        warned[Concern==TRUE,.N]/totalEventCount,warned[Concern==FALSE,.N]/totalEventCount,
-        notWarned[Concern==TRUE,.N]/totalEventCount,notWarned[Concern==FALSE,.N]/totalEventCount))
-    }
-    
-    resultsList[[as.character(Pc)]] <- list("Pc_concern"=Pc,
-                                            "threshold_Pc"=threshold_Pc,
-                                            "number_of_fragments"=number_of_fragments,
-                                            "truePositiveRate"=warned[Concern==TRUE,.N]/totalEventCount,
-                                            "falsePositiveRate"=warned[Concern==FALSE,.N]/totalEventCount,
-                                            "falseNegativeRate"=notWarned[Concern==TRUE,.N]/totalEventCount,
-                                            "trueNegativeRate"=notWarned[Concern==FALSE,.N]/totalEventCount)
-  }
-    
-  return(resultsList)
-}
-
-results <- debrisConcern(threshold_Pc=1e-9)
-
-# Visualize false negative rate changing as you vary the warning threshold
-warningThresholds <- c(1e-5,1e-10,1e-15)
-falseNegData <- data.table(
-  "PcConcern"=c(),
-  "WarningTHreshold"=c(),
-  "FragmentNum"=c(),
-  "falseNegRate"=c()
-)
-
-for (warning in warningThresholds) {
-  
-  warningResult <- debrisConcern(threshold_Pc=warning)
-  falseNegData
-}
-
+# Execute function for the following inputs
+results <- debrisConfusion(concernData_at_TOI=concernSummary_at_TOI,
+                           concernData=concernSummary,
+                           Pc_warn=2.06e-9,
+                           days_to_TCA=5,
+                           Pc_concern=1e-5,
+                           frag_number_Pc="PcBest",
+                           verbose=FALSE,
+                           rate=FALSE)
