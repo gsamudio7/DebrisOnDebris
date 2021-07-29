@@ -28,6 +28,11 @@ output:
 
 <br>
 
+<center>
+![](assets/MIT-Orbit-Debris_0.jpeg)
+</center>
+
+<br>
 
 ```{r setUp, include=FALSE}
 knitr::opts_chunk$set(
