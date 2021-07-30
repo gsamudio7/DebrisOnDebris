@@ -1,6 +1,12 @@
 ---
 title: "Debris Collision in Space Analysis"
-author: "[Team Hulk](mailto:gsamudio7@gmail.com)"
+author:
+  "[MAJ J.D. Caddell<br>
+    MAJ Charles Gallagher<br>
+    MAJ Ben Halle\n<br>
+    MAJ Tim Justicz<br>
+    MAJ Gabe Samudio](mailto:gsamudio7@gmail.com)"
+  
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
   html_document:
@@ -15,12 +21,14 @@ output:
 
 
 <style>
-#nav_logo {
-  width: 100%;
-}
 
 #TOC {
-  margin-top: 10.5px;
+  margin-top: 20px;
+  background: url("https://ewscripps.brightspotcdn.com/dims4/default/9d34d32/2147483647/strip/true/crop/1280x720+0+0/resize/1280x720!/quality/90/?url=http%3A%2F%2Fewscripps-brightspot.s3.amazonaws.com%2F42%2Fb3%2Ff10c7ff1498880ea9768df26cf47%2Fus-space-command.jpg");
+  background-size: contain;
+  padding-top: 170px !important;
+  background-repeat: no-repeat;
+  border: None;
 }
 
 </style>
@@ -38,85 +46,41 @@ knitr::opts_chunk$set(
   cache=FALSE,
   message=FALSE,
   warning=FALSE,
-  out.width="100%",
-  fig.cap=TRUE,
   fig.align="center",
-  class.source="chunk"
+  class.source="chunk",
+  out.width="100%"
 )
 
 library(data.table)
 library(dplyr)
 library(plotly)
 library(RColorBrewer)
-
-# Read in trimmed data
-events <- fread("data/events.csv")
-
+library(formattable)
+options(scipen=99)
 ```
 
-# EXSUM
+# Executive Summary
 In development
 
-# Introduction
+# Problem Formulation
 In development
 
 # Exploratory Data Analysis {.tabset .tabset-fade}
 Words
 
-```{r processing, echo=FALSE}
-# Summarize conjunction events of concern for each FragNum
-concernSummary <- rbindlist(list(
-  
-  # PcBest
-  events[!is.na(PcBest),
-    .(bool=time2TCA==min(time2TCA) & time2TCA < 1,
-      fragNum="PcBest",
-      Pc_min=PcBest),
-    by=eventNumber][bool==TRUE,!"bool"],
-  
-  # PcFrag10
-  events[!is.na(PcFrag10),
-   .(bool=time2TCA==min(time2TCA) & time2TCA < 1,
-     fragNum="PcFrag10",
-     Pc_min=PcFrag10),
-   by=eventNumber][bool==TRUE,!"bool"],
-  
-  # PcFrag100
-  events[!is.na(PcFrag100),
-   .(bool=time2TCA==min(time2TCA) & time2TCA < 1,
-     fragNum="PcFrag100",
-     Pc_min=PcFrag100),
-   by=eventNumber][bool==TRUE,!"bool"],
-  
-  # PcFrag1000
-  events[!is.na(PcFrag1000),
-   .(bool=time2TCA==min(time2TCA) & time2TCA < 1,
-     fragNum="PcFrag1000",
-     Pc_min=PcFrag1000),
-   by=eventNumber][bool==TRUE,!"bool"],
-  
-  # PcFrag10000
-  events[!is.na(PcFrag10000),
-   .(bool=time2TCA==min(time2TCA) & time2TCA < 1,
-     fragNum="PcFrag10000",
-     Pc_min=PcFrag10000),
-   by=eventNumber][bool==TRUE,!"bool"]
-))
-
-concernSummary[,"fragNum" := as.factor(fragNum)]
-concernSummary[,"Pc_min" := as.double(Pc_min)]
-```
-
 ### How many conjunction events have 0 Probability of Collision within a day of TCA?
 ```{r EDA1, echo=FALSE}
+
+load("data/concernData.RData")
+
 # How many are 0?
 zeroCount <- merge(
   concernSummary[Pc_min==0,.(Zero_count=.N),by=fragNum],
   concernSummary[,.(Total=.N),by=fragNum],
   by="fragNum")
-zeroCount[,"Proportion" := Zero_count/Total]
+zeroCount[,"Proportion" := round(Zero_count/Total,3)]
 zeroCount <- zeroCount[,!"Total"]
-zeroCount
+zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)
 ```
 Results explanation
 
@@ -128,8 +92,10 @@ concernCount <- merge(
   concernSummary[Pc_min >= 1e-5,.(Concern_Event_Count=.N),by=fragNum],
   concernSummary[,.(Total=.N),by=fragNum]
 )
-concernCount[,"Proportion" := Concern_Event_Count/Total]
-concernCount # Frag 10000 has no concern events
+concernCount$Proportion <- formatC(concernCount$Concern_Event_Count/concernCount$Total,
+                                   format="e",digits=2)
+concernCount[,!"Total"] %>% formattable(align="l") %>% 
+  as.htmlwidget(width=250)# Frag 10000 has no concern events
 
 ```
 
@@ -143,22 +109,30 @@ Pc_at_1_day
 ```
 Results explanation.
 
+## New Concern Events
+```{r eda_plot2, echo=FALSE, fig.cap="<b>Figure 2: </b>Concern Event Count over Time"}
+load("products/newConcernSummary_plot.RData")
+newConcernSummary_plot
+```
 
 ## Pc over Time
 
-```{r eda_plot2, echo=FALSE, fig.cap="<b>Figure 2: </b>Collision Probability as TCA Varies"}
+```{r eda_plot3, echo=FALSE, fig.cap="<b>Figure 3: </b>Collision Probability as TCA Varies"}
 load("products/Pc_by_TCA_plot.RData")
 Pc_by_TCA_plot
 ```
 Results explanation.
 
 
-## FNR and FPR Tradeoff
+# FNR and FPR Tradeoff
 
-```{r eda_plot3, echo=FALSE, fig.cap="<b>Figure 3: </b>Confusion Rates Analysis"}
-load("products/concernRates.RData")
-concernRates
+```{r eda_plot4, echo=FALSE, fig.cap="<b>Figure 4: </b>Confusion Rates at Five Days to TCA\nand Concern Prop = 1e-5",fig.width=4, fig.show='hold'}
+load("products/concernRates_plot.RData")
+concernRates_plot
 ```
 Results explanation.
 
-# Conclusion
+# Way Forward (Proposed Methodology)
+
+- Thing 1
+- Thing 2
