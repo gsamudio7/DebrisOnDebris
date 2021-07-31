@@ -1,5 +1,6 @@
 ---
-title: "Debris Collision in Space Analysis"
+title: "Space Debris Collision Risk Analysis"
+subtitle: "FA49 Qualification Course Capstone Project"
 author:
   "[MAJ J.D. Caddell<br>
     MAJ Charles Gallagher<br>
@@ -15,7 +16,7 @@ output:
     self_contained: yes
     toc: yes
     toc_float: yes
-    toc_depth: 1
+    toc_depth: 2
 ---
 
 
@@ -32,13 +33,11 @@ output:
 }
 
 </style>
-
-<br>
-
 <center>
-![](assets/MIT-Orbit-Debris_0.jpeg)
+<img src="assets/MIT-Orbit-Debris_0.jpeg" width="90%"/> 
 </center>
 
+<br>
 <br>
 
 ```{r setUp, include=FALSE}
@@ -48,7 +47,8 @@ knitr::opts_chunk$set(
   warning=FALSE,
   fig.align="center",
   class.source="chunk",
-  out.width="100%"
+  out.width="100%",
+  fig.retina = 2
 )
 
 library(data.table)
@@ -68,40 +68,21 @@ In development
 # Exploratory Data Analysis {.tabset .tabset-fade}
 Words
 
+
+<br>
+
+## Collision Probability Density
+
 ### How many conjunction events have 0 Probability of Collision within a day of TCA?
 ```{r EDA1, echo=FALSE}
 
-load("data/concernData.RData")
+#load("data/concernData.RData")
 
 # How many are 0?
-zeroCount <- merge(
-  concernSummary[Pc_min==0,.(Zero_count=.N),by=fragNum],
-  concernSummary[,.(Total=.N),by=fragNum],
-  by="fragNum")
-zeroCount[,"Proportion" := round(Zero_count/Total,3)]
-zeroCount <- zeroCount[,!"Total"]
-zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)
-```
-Results explanation
-
-
-### How many events of concern if the threshold is 1e-5?
-```{r EDA2, echo=FALSE}
-# How many concern events at varying frag numbers values?
-concernCount <- merge(
-  concernSummary[Pc_min >= 1e-5,.(Concern_Event_Count=.N),by=fragNum],
-  concernSummary[,.(Total=.N),by=fragNum]
-)
-concernCount$Proportion <- formatC(concernCount$Concern_Event_Count/concernCount$Total,
-                                   format="e",digits=2)
-concernCount[,!"Total"] %>% formattable(align="l") %>% 
-  as.htmlwidget(width=250)# Frag 10000 has no concern events
+load("products/zeroCount.RData")
+zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 
 ```
-
-Results explanation
-
-## Pc within One Day to TCA
 
 ```{r eda_plot1, echo=FALSE, fig.cap="<b>Figure 1: </b>Collision Probability within One Day of TCA"}
 load("products/Pc_at_1_day.RData")
@@ -109,13 +90,22 @@ Pc_at_1_day
 ```
 Results explanation.
 
-## New Concern Events
+## Concern Event Frequency 
+
+### How many events of concern if the threshold is 1e-5?
+```{r EDA2, echo=FALSE}
+
+load("products/concernCount.RData")
+concernCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
+
+```
+
 ```{r eda_plot2, echo=FALSE, fig.cap="<b>Figure 2: </b>Concern Event Count over Time"}
 load("products/newConcernSummary_plot.RData")
 newConcernSummary_plot
 ```
 
-## Pc over Time
+## Collision Probability Variability
 
 ```{r eda_plot3, echo=FALSE, fig.cap="<b>Figure 3: </b>Collision Probability as TCA Varies"}
 load("products/Pc_by_TCA_plot.RData")
@@ -124,7 +114,7 @@ Pc_by_TCA_plot
 Results explanation.
 
 
-# FNR and FPR Tradeoff
+# Risk Tradespace
 
 ```{r eda_plot4, echo=FALSE, fig.cap="<b>Figure 4: </b>Confusion Rates at Five Days to TCA\nand Concern Prop = 1e-5",fig.width=4, fig.show='hold'}
 load("products/concernRates_plot.RData")
@@ -132,7 +122,7 @@ concernRates_plot
 ```
 Results explanation.
 
-# Way Forward (Proposed Methodology)
+# Way Forward 
 
 - Thing 1
 - Thing 2

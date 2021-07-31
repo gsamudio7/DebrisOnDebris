@@ -54,29 +54,60 @@ zeroCount <- merge(
   concernSummary[Pc_min==0,.(Zero_count=.N),by=fragNum],
   concernSummary[,.(Total=.N),by=fragNum],
   by="fragNum")
-zeroCount[,"Proportion" := Zero_count/Total]
-zeroCount <- zeroCount[,!"Total"]
-zeroCount
+zeroCount$Proportion <- round(zeroCount$Zero_count/zeroCount$Total,3)
+x <- zeroCount$fragNum
+zeroCount[,"Fragment Size" := case_when(
+  x == "PcBest" ~ ">= 1",
+  x == "PcFrag10" ~ ">= 10",
+  x == "PcFrag100" ~ ">= 100",
+  x == "PcFrag1000" ~ ">= 1000",
+  x == "PcFrag10000" ~ ">= 10000"
+)]
+zeroCount[,"Prob=0 Events" := Zero_count]
+zeroCount <- zeroCount[,c("Fragment Size","Prob=0 Events","Proportion")]
+save(zeroCount,file="products/zeroCount.RData")
 
 # How many concern events at varying frag numbers values?
 concernCount <- merge(
-  concernSummary[Pc_min >= 1e-5,.(Concern_Event_Count=.N),by=fragNum],
+  concernSummary[Pc_min >= 1e-5,.(`Concern Events`=.N),by=fragNum],
   concernSummary[,.(Total=.N),by=fragNum]
 )
-concernCount[,"Proportion" := Concern_Event_Count/Total]
-concernCount # Frag 10000 has no concern events
+concernCount$Proportion <- formatC(concernCount$`Concern Events`/concernCount$Total,
+                                   format="e",digits=2)
+x <- concernCount$fragNum
+concernCount[,"Fragment Size" := case_when(
+  x == "PcBest" ~ ">= 1",
+  x == "PcFrag10" ~ ">= 10",
+  x == "PcFrag100" ~ ">= 100",
+  x == "PcFrag1000" ~ ">= 1000",
+  x == "PcFrag10000" ~ ">= 10000"
+)]
+
+concernCount <- concernCount[,c("Fragment Size","Concern Events","Proportion")] 
+save(concernCount,file="products/concernCount.RData")
+
 
 
 # Explore distribution of Collision probabilities, for different fragment numbers
-Pc_at_1_day <- concernSummary %>%
+x <- concernSummary$fragNum
+concernSummary[,"Fragment Size" := case_when(
+  x == "PcBest" ~ ">= 1",
+  x == "PcFrag10" ~ ">= 10",
+  x == "PcFrag100" ~ ">= 100",
+  x == "PcFrag1000" ~ ">= 1000",
+  x == "PcFrag10000" ~ ">= 10000"
+)]
+
+Pc_at_1_day <- 
+  concernSummary %>%
   plot_ly(
     type="histogram",
     x=~log(Pc_min),
-    color=~fragNum,
-    nbinsx=35
+    color=~`Fragment Size`,
+    nbinsx=35#,
+    #colors=colorRampPalette(brewer.pal(5,"Spectral"))(5)
   ) %>%
-  layout(title = '<b>Collision Probability Distribution\nwhen TCA < 1 day</b>',
-         xaxis = list(title="<b>Collision Probability</b>",
+  layout(xaxis = list(title="<b>Collision Probability</b>",
                       tickvals = seq(-720,-20,100),
                       ticktext = seq(-720,-20,100) %>% exp() %>% formatC(format="e",digits=2),
                       tickfont = list(size = 10),
@@ -84,6 +115,7 @@ Pc_at_1_day <- concernSummary %>%
                       gridcolor="#333333"),
          yaxis = list(title="<b>Frequency</b>",
                       gridcolor="#333333"),
+         legend = list(title = list(text = "<b>Fragment Size</b>")),
          plot_bgcolor  = "#444444",
          paper_bgcolor = "#444444",
          font = list(color = '#FFFFFF'),
@@ -238,7 +270,7 @@ newConcernSummary_plot <- newConcernSummary %>%
   layout(
     xaxis=list(title="<b>Days to TCA Bin</b>",
                gridcolor="#333333"),
-    yaxis=list(title="<b>Count</b>",
+    yaxis=list(title="<b>Concern Events</b>",
                gridcolor="#333333"),
     plot_bgcolor  = "#444444",
     paper_bgcolor = "#444444",
@@ -340,7 +372,7 @@ Pc_by_TCA_plot <- concernSummary_at_TOI[fragNum=="PcBest"] %>%
     hoverinfo="none"
   ) %>%
   layout(
-    yaxis = list(title="<b>Probability of Collision</b>",
+    yaxis = list(title="<b>Collision Probability</b>",
                  tickvals = seq(-700,0,100),
                  ticktext = seq(-700,0,100) %>% exp() %>% formatC(format="e",digits=2),
                  tickfont = list(size = 10),
@@ -478,7 +510,7 @@ save(concernRates_plot,file="products/concernRates_plot.RData")
 concernRates_plot <- 
 concernRates %>% 
   plot_ly(type="scatter",
-          mode="lines+markers",
+          mode="lines",
           x=~log(`False Positive`),
           y=~`False Negative`,
           text=~paste0("<b>Warning Threshold: </b>",Warn_Threshold,"<br>",
@@ -488,8 +520,8 @@ concernRates %>%
                        "<b>Concern Events: </b>",Concern_Events,"<br>",
                        "<b>Events: </b>",Events),
           hoverinfo="text",
-          marker=list(size=3.5),
-          line=list(width=1)
+          #marker=list(size=3.5),
+          line=list(width=2.5)
     ) %>%
   
   layout(

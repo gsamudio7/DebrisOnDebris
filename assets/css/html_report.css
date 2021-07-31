@@ -8,7 +8,7 @@ body {
 
 
 .title.toc-ignore {
-  font-size: 80px;
+  font-size: 40px;
   margin-top: 10.5px;
 }
 
@@ -62,8 +62,8 @@ table {
 
 a {
   list-style-type: circle;
-  background-color: #2359c4;
-  color: #D3D3D3;
+  background-color: ##000000;
+  color: #2359c4;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
