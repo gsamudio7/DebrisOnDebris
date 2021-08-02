@@ -64,46 +64,30 @@ options(scipen=99)
 ```
 
 # Executive Summary
-- Charged with informing the process to develop a debris on debris collision warning threshold to mitigate future collision risk and limit false alarms.
+- Charged with informing the process to develop a debris on debris collision warning threshold to mitigate future collision risk and limit false alarms.<br><br>
 - The study has focused on the following parameters:
     - Fragment size of at least 1.
     - Five days to time of closest approach (TCA).
-    - Concern Events terminology defined as $\text{Collision Probability} >= 1\text{e-}5$ within a day to TCA.
+    - Concern Events terminology defined as $\text{Collision Probability} >= 1\text{e-}5$ within a day to TCA.<br><br>
 - Study progress:
     - We can visualize the missed concern event and false alarm risk space.
-    - We have developed an application to explore various warning thresholds.
-
-<br>
-
-<br>
+    - We have developed an application to explore various warning thresholds.<br><br>
 
 # Problem Formulation
 - <b>Problem Statement:</b> Under what circumstances should debris-on-debris collision warnings be used?
     - What probability of collision should be used as a surrogate for an actual event of concern?
     - What probability of collision should trigger a warning at five days to TCA?
-    - How well can we do in warning for events occurring in the future?
-
-- <b>Mission Statement:</b> Recommend debris collision notification thresholds and develop a mechanism to explore the notification decision space to assess risk of debris-on-debris collisions in space. 
-
-<br>
-
-<br>
+    - How well can we do in warning for events occurring in the future?<br><br>
+- <b>Mission Statement:</b> Recommend debris collision notification thresholds and develop a mechanism to explore the notification decision space to assess risk of debris-on-debris collisions in space.<br><br>
 
 # Exploratory Data Analysis 
-
 - <b>Questions:</b>
     - How is the Collision Probability distributed?
     - How does the rate of new concern events change over time?
-    - How does the Collision Probability change over time?
-    
+    - How does the Collision Probability change over time?<br><br>
 - <b>Data Preparation:</b>
     - Summarize by each event to show the Collision Probability for each fragment size at the last recorded time, if that time is within a day of TCA.
-
-    - Summarize by each event to show the Collision Probability for each fragment size at the last recorded time, for each binned days to TCA.
-    
-<br>
-
-<br>
+    - Summarize by each event to show the Collision Probability for each fragment size at the last recorded time, for each binned days to TCA.<br><br>
 
 ## Collision Probability Density
 We need to find a range of values to appropriately label events of concern.
@@ -121,11 +105,13 @@ zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 
 ```
 </center>
+
 <br>
 
 <center>
 <b>Figure 2: Collision Probability within One Day of TCA</b>
 </center>
+
 <br>
 
 ```{r eda_plot1, echo=FALSE}
@@ -136,11 +122,11 @@ Pc_at_1_day
 <br>
 
 We use,
-<br>
 
 <center>
 $\text{Collision Probabilty} >= 1\text{e-}5 \text{ and days to TCA} < 1 \text{ day,}$ 
 </center>
+
 <br>
 
 as a surrogate to label a concern event. 
@@ -160,9 +146,11 @@ concernCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 
 ```
 </center>
+
 <br>
 
 We focus our initial analysis on concern events with fragment size of $>= 1$ fragment. Future methodology will include events with higher fragment sizes.
+
 <br>
 
 <br>
@@ -170,6 +158,7 @@ We focus our initial analysis on concern events with fragment size of $>= 1$ fra
 <center>
 <b>Figure 3: Concern Event Count over Time</b>
 </center>
+
 <br>
 
 ```{r eda_plot2, echo=FALSE}
@@ -182,6 +171,7 @@ newConcernSummary_plot
 - At $5 \text{ days to TCA}$ the number of new concern events drastically increases.
 - We will only have visibility of about $50%$ of concern events at $5 \text{ days to TCA}$.
 - There is an advantage to a warning time interval within 5 days.
+
 <br>
 
 <br>
@@ -196,6 +186,7 @@ newConcernSummary_plot
 <center>
 <b>Figure 4: Collision Probability as TCA Varies</b>
 </center>
+
 <br>
 
 ```{r eda_plot3, echo=FALSE}
@@ -208,11 +199,13 @@ Pc_by_TCA_plot
 
 - The variability expands slightly, but there is not overwhelming evidence of an increase in the $\text{Collision Probabilty}$.
 - We consider the following range for $\text{Collision Probability}$ warning thresholds:
+
 <br>
 
 <center>
 $1.94\text{e-}22 <= Pc\_warn <= 1\text{e-}5$,
 </center>
+
 <br>
 
 where $Pc\_warn$ is the $\text{Collision Probability}$ that triggers a warning.
@@ -243,9 +236,11 @@ $\text{FP} := \text{Number of false alarms, where warned events at 5 days to TCA
 We can now explore how the warning threshold effects the $\text{FP}$ and $\text{FN}$.
 
 <br>
+
 <center>
 <b>Figure 5: Confusion Rates at Five Days to TCA and Concern Prop = 1e-5</b>
 </center>
+
 <br>
 
 ```{r eda_plot4, echo=FALSE}
