@@ -54,58 +54,102 @@ zeroCount <- merge(
   concernSummary[Pc_min==0,.(Zero_count=.N),by=fragNum],
   concernSummary[,.(Total=.N),by=fragNum],
   by="fragNum")
-zeroCount[,"Proportion" := Zero_count/Total]
-zeroCount <- zeroCount[,!"Total"]
-zeroCount
+zeroCount$Proportion <- round(zeroCount$Zero_count/zeroCount$Total,3)
+x <- zeroCount$fragNum
+zeroCount[,"Fragment Size" := case_when(
+  x == "PcBest" ~ ">= 1",
+  x == "PcFrag10" ~ ">= 10",
+  x == "PcFrag100" ~ ">= 100",
+  x == "PcFrag1000" ~ ">= 1000",
+  x == "PcFrag10000" ~ ">= 10000"
+)]
+zeroCount[,"Prob=0 Events" := Zero_count]
+zeroCount <- zeroCount[,c("Fragment Size","Prob=0 Events","Proportion")]
+save(zeroCount,file="products/zeroCount.RData")
 
 # How many concern events at varying frag numbers values?
 concernCount <- merge(
-  concernSummary[Pc_min >= 1e-5,.(Concern_Event_Count=.N),by=fragNum],
+  concernSummary[Pc_min >= 1e-5,.(`Concern Events`=.N),by=fragNum],
   concernSummary[,.(Total=.N),by=fragNum]
 )
-concernCount[,"Proportion" := Concern_Event_Count/Total]
-concernCount # Frag 10000 has no concern events
+concernCount$Proportion <- formatC(concernCount$`Concern Events`/concernCount$Total,
+                                   format="e",digits=2)
+x <- concernCount$fragNum
+concernCount[,"Fragment Size" := case_when(
+  x == "PcBest" ~ ">= 1",
+  x == "PcFrag10" ~ ">= 10",
+  x == "PcFrag100" ~ ">= 100",
+  x == "PcFrag1000" ~ ">= 1000",
+  x == "PcFrag10000" ~ ">= 10000"
+)]
+
+concernCount <- concernCount[,c("Fragment Size","Concern Events","Proportion")] 
+save(concernCount,file="products/concernCount.RData")
+
 
 
 # Explore distribution of Collision probabilities, for different fragment numbers
-Pc_at_1_day <- concernSummary %>%
+x <- concernSummary$fragNum
+concernSummary[,"Fragment Size" := case_when(
+  x == "PcBest" ~ ">= 1",
+  x == "PcFrag10" ~ ">= 10",
+  x == "PcFrag100" ~ ">= 100",
+  x == "PcFrag1000" ~ ">= 1000",
+  x == "PcFrag10000" ~ ">= 10000"
+)]
+
+Pc_at_1_day <- 
+  concernSummary %>%
   plot_ly(
     type="histogram",
     x=~log(Pc_min),
-    color=~fragNum,
+    color=~`Fragment Size`,
     nbinsx=35
   ) %>%
-  
-  layout(title = '<b>Collision Probability Distribution\nwhen TCA < 1 day</b>',
-         xaxis = list(title="<b>Collision Probability</b>",
+  layout(xaxis = list(title="<b>Collision Probability</b>",
                       tickvals = seq(-720,-20,100),
                       ticktext = seq(-720,-20,100) %>% exp() %>% formatC(format="e",digits=2),
                       tickfont = list(size = 10),
-                      tickangle = 90),
-         yaxis = list(title="<b>Frequency</b>"),
-         hovermode = "x unified",
-         
+                      tickangle = 90,
+                      gridcolor="#333333"),
+         yaxis = list(title="<b>Frequency</b>",
+                      gridcolor="#333333"),
+         legend = list(title = list(text = "<b>Fragment Size</b>")),
+         plot_bgcolor  = "#444444",
+         paper_bgcolor = "#444444",
+         font = list(color = '#FFFFFF'),
          shapes = list(
+           list(type= "line",
+                line = list(color='#FFFFFF'),
+                x0 = quantile(log(concernSummary$Pc_min),.95,na.rm=TRUE),
+                x1 = quantile(log(concernSummary$Pc_min),.95,na.rm=TRUE),
+                y0 = 0, y1 = 2695),
+           
            list(type ="line",
-                line = list(color="black"),
+                line = list(color='#FFFFFF'),
                 x0 = log(1e-5), x1 = log(1e-5),
-                y0 = 0, y1 = 2400),
-           list(type ="line",
-                line = list(color="black"),
-                x0 = log(1e-100), x1 = log(1e-100),
                 y0 = 0, y1 = 2150),
            list(type ="line",
-                line = list(color="black"),
+                line = list(color='#FFFFFF'),
+                x0 = log(1e-100), x1 = log(1e-100),
+                y0 = 0, y1 = 1900),
+           list(type ="line",
+                line = list(color='#FFFFFF'),
                 x0 = log(1e-200), x1 = log(1e-200),
-                y0 = 0, y1 = 1900)),
+                y0 = 0, y1 = 1650)),
            
          annotations = list(
+           list(text=paste("<b>.95 Quartile:</b><br>",
+                           quantile(concernSummary$Pc_min,.95,na.rm=TRUE) %>%
+                             formatC(format="e",digits=2)),
+                x = log(1e-45),
+                y = 2600, showarrow=FALSE),
            list(text = paste("<b>1e-5</b>"),
-                x = log(1e-5), y = 2500, showarrow=FALSE),
+                x = log(1e-5), y = 2250, showarrow=FALSE),
            list(text = paste("<b>1e-100</b>"),
-                x = log(1e-100), y = 2250, showarrow=FALSE),
+                x = log(1e-100), y = 2000, showarrow=FALSE),
            list(text = paste("<b>1e-200</b>"),
-                x = log(1e-200), y = 2000, showarrow=FALSE))
+                x = log(1e-200), y = 1750, showarrow=FALSE))
   )
   
 
@@ -160,10 +204,14 @@ concernSummary_at_TOI[,"Pc_at_TOI" := as.double(Pc_at_TOI)]
 # Save and push to Git
 save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
 
+# Start here ####
 
+library(data.table)
+library(dplyr)
+library(plotly)
+library(RColorBrewer)
 
-
-
+load("data/concernData.RData")
 
 # How many zeros?
 zeroCount <- merge(
@@ -175,23 +223,171 @@ zeroCount[,"Proportion" := Zero_count/Total]
 zeroCount <- zeroCount[,!"Total"]
 zeroCount # Make a pretty plot
 
+# How does quantity change over time ####
+concernSummary_at_TOI[fragNum=="PcBest" & Pc_at_TOI >= 1e-5,.N,by=TCA_Bin] %>% 
+  plot_ly(
+    type="bar",
+    x=~TCA_Bin,
+    y=~N,
+    color=I("royalblue4")
+  )
 
-# Plot
-Pc_by_TCA_plot <- concernSummary_at_TOI %>%
+
+
+
+# How does quantity of NEW concern events change over time
+concernEvents <- concernSummary_at_TOI[fragNum=="PcBest" & Pc_at_TOI >= 1e-5]
+
+newConcernEvents <- list("10"=concernEvents[TCA_Bin==10,unique(eventNumber)])
+for (i in (9:1)) {
+  oldEvents <- concernEvents[TCA_Bin==i + 1,unique(eventNumber)] 
+  newEvents <- concernEvents[TCA_Bin==i,unique(eventNumber)] 
+  newConcernEvents[[as.character(i)]] = setdiff(newEvents,oldEvents)
+}
+newConcernSummary <- merge(
+  data.table("TCA_Bin"=as.factor(10:1),
+             "newCount"=unlist(lapply(newConcernEvents,length))),
+  concernEvents[,.(concernCount=.N),by=TCA_Bin],
+  by="TCA_Bin"
+) 
+  
+newConcernSummary_plot <- newConcernSummary %>% 
+  plot_ly(
+  type="bar",
+  x=~TCA_Bin,
+  y=~concernCount,
+  color=I("#222222"),
+  name="Total",
+  hoverinfo="none"
+) %>%
+  
+  add_trace(
+    y=~newCount,
+    name="New",
+    color=I("royalblue3")
+  ) %>%
+  
+  layout(
+    xaxis=list(title="<b>Days to TCA Bin</b>",
+               gridcolor="#333333"),
+    yaxis=list(title="<b>Concern Events</b>",
+               gridcolor="#333333"),
+    plot_bgcolor  = "#444444",
+    paper_bgcolor = "#444444",
+    font = list(color = '#FFFFFF')
+  )
+
+
+
+save(newConcernSummary_plot,file="products/newConcernSummary_plot.RData")
+
+
+# Count the number of new events plus events that are carried through
+'%ni%' <- Negate('%in%')
+events_at_5 <- concernSummary_at_TOI[TCA_Bin==5,unique(eventNumber)]
+length(events_at_5)
+events_at_5_and_1 <- concernSummary_at_TOI[eventNumber %in% events_at_5 & TCA_Bin==1,unique(eventNumber)]
+length(events_at_5_and_1)
+events_at_1_and_not_at_5 <- concernSummary_at_TOI[eventNumber %ni% events_at_5 & TCA_Bin==1,
+                                                  unique(eventNumber)]
+length(events_at_1_and_not_at_5)
+
+# Verify
+length(events_at_5_and_1) + length(events_at_1_and_not_at_5) == concernSummary_at_TOI[TCA_Bin==1,uniqueN(eventNumber)]
+
+# What is the distribution of Pc at 5 for events that make it to 1
+concernSummary_at_TOI[fragNum=="PcBest" & 
+                      eventNumber %in% events_at_5_and_1 & 
+                      TCA_Bin == 5 |
+                        
+                      fragNum=="PcBest" & 
+                      eventNumber %in% events_at_5_and_1 & 
+                      TCA_Bin == 1] %>%
   plot_ly(
     type="box",
     x=~TCA_Bin,
-    y=~log(PcBest_at_TOI)
+    y=~log(Pc_at_TOI)
+  ) 
+
+# What is the distribution of the delta?
+concernSummary_Pc_at_1_from_5 <- concernSummary_at_TOI[
+  fragNum=="PcBest" & 
+  eventNumber %in% events_at_5_and_1 & 
+  TCA_Bin == 1 |
+  
+  fragNum=="PcBest" & 
+  eventNumber %in% events_at_5_and_1 & 
+  TCA_Bin == 5] %>% setorder(eventNumber,-TCA_Bin)
+
+concernSummary_diff_at_1_from_5 <- concernSummary_Pc_at_1_from_5[
+  ,.(Delta=diff(Pc_at_TOI)),by=eventNumber] 
+
+# How many 0
+concernSummary_diff_at_1_from_5[Delta==0,.N]/concernSummary_diff_at_1_from_5[,.N] # 0.64
+
+# How many increased
+concernSummary_diff_at_1_from_5[Delta > 0,.N]/concernSummary_diff_at_1_from_5[,.N] # 0.085
+
+# How many decreased
+concernSummary_diff_at_1_from_5[Delta < 0,.N]/concernSummary_diff_at_1_from_5[,.N] 
+
+# Box Plot
+concernSummary_Pc_at_1_from_5 %>%
+  plot_ly(
+    type="box",
+    y=~log(Pc_at_TOI),
+    x=~as.integer(TCA_Bin) - 1
   ) %>%
   layout(
     yaxis = list(title="<b>Probability of Collision</b>",
                  tickvals = seq(-700,0,100),
                  ticktext = seq(-700,0,100) %>% exp() %>% formatC(format="e",digits=2),
-                 tickfont = list(size = 10))
+                 tickfont = list(size = 10)),
+    xaxis = list(title="<b>Days to TCA</b>")
+  )
+
+concernSummary_Pc_at_1_from_5 %>%
+  plot_ly(
+    type="scatter",
+    mode="lines",
+    y=~log(Pc_at_TOI),
+    x=~as.integer(TCA_Bin) - 1
+  ) 
+
+# Conclusion
+## No obvious advantage in having a higher Pc_warn threshold at 5 days than the Pc_concern rate
+
+# Question remains, what Pc_warn value at 5 days is the ideal to use to 
+## minimize False negatives and minimize False Positives
+
+
+
+
+# Plot
+Pc_by_TCA_plot <- concernSummary_at_TOI[fragNum=="PcBest"] %>%
+  plot_ly(
+    type="box",
+    y=~log(Pc_at_TOI),
+    x=~TCA_Bin,
+    hoverinfo="none",
+    color=I("#2359c4")
+  ) %>%
+  layout(
+    yaxis = list(title="<b>Collision Probability</b>",
+                 tickvals = seq(-700,0,100),
+                 ticktext = seq(-700,0,100) %>% exp() %>% formatC(format="e",digits=2),
+                 tickfont = list(size = 10),
+                 gridcolor="#333333"),
+    xaxis = list(title="<b>Days to TCA</b>",
+                 gridcolor="#333333"),
+    plot_bgcolor  = "#444444",
+    paper_bgcolor = "#444444",
+    font = list(color = '#FFFFFF')
   )
   
 save(Pc_by_TCA_plot,file="products/Pc_by_TCA_plot.RData")
   
+
 
 # Count total positives (events of concern) that we have visibility on at 5 days out
 Pc_concern <- 1e-5
@@ -213,24 +409,29 @@ debrisConfusion <- function(concernData_at_TOI,concernData,
   df <- merge(
     concernData_at_TOI[TCA_Bin==days_to_TCA & fragNum==frag_number_Pc,c("eventNumber","Pc_at_TOI")],
     concernData[fragNum==frag_number_Pc,c("eventNumber","Pc_min")],
-    by="eventNumber"
+    by="eventNumber",
+    all=FALSE
   )
   
-  P <- concernData[fragNum==frag_number_Pc & Pc_min >= Pc_concern,.N] 
-  N <- concernData[fragNum==frag_number_Pc & Pc_min < Pc_concern,.N]
+  P <- concernData[Pc_min >= Pc_concern,.N] 
+  N <- concernData[Pc_min < Pc_concern,.N]
   
   if (rate==TRUE) {
-    TPR <- df[Pc_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]/P
-    FPR <- df[Pc_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]/N
-    TNR <- df[Pc_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]/N
-    FNR <- df[Pc_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]/P
-    
-    result_data_table <- data.table("Warn_Threshold"=c(Pc_warn,Pc_warn,Pc_warn,Pc_warn),
-                                    "Rate"=c(FNR,FPR,TPR,TNR),
-                                    "Rate Type"=c("False Negative Rate",
-                                                  "False Positive Rate",
-                                                  "True Positive Rate",
-                                                  "True Negative Rate")
+    #TP <- df[Pc_at_TOI >= Pc_warn & Pc_min >= Pc_concern,.N]
+    FP <- df[Pc_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]
+    #TN <- df[Pc_at_TOI < Pc_warn & Pc_min < Pc_concern,.N]
+    FN <- df[Pc_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]
+    warningCount <- df[Pc_at_TOI >= Pc_warn,.N]
+      
+    result_data_table <- data.table("Warn_Threshold"=Pc_warn %>% formatC(format="e",digits=2),
+                                    "False Negative"=FN/P,
+                                    "False Positive"=FP/N,
+                                    "Missed"=FN,
+                                    "FalseAlarms"=FP,
+                                    "Warning_Count"=warningCount,
+                                    "Concern_Events"=P,
+                                    "Events"=nrow(df)
+                                    
     )
     
   } else {
@@ -258,33 +459,89 @@ debrisConfusion <- function(concernData_at_TOI,concernData,
 
 # Get data for a range of values
 concernRates <- lapply(
-  seq(from=1e-9,
-      to=1e-4,
-      by=1e-6),
+  seq(from=1.94e-22,
+      to=1e-5,
+      by=1e-8),
   debrisConfusion,
   concernData_at_TOI=concernSummary_at_TOI,
   concernData=concernSummary,
-  days_to_TCA=5) %>% rbindlist() %>%
+  days_to_TCA=5) %>% rbindlist() 
 
-# Plot
+# # Plot
+# concernRates_plot <- 
+# 
+# concernRates %>%
+#   plot_ly(type="scatter",
+#           mode="lines",
+#           x=~Warn_Threshold,
+#           y=~Rate,
+#           text=~paste0("<b>Warning Threshold: </b>",Warn_Threshold,"<br>",
+#                        "<b>Missed Concern Events: </b>",Missed,"<br>",
+#                        "<b>False Alarms: </b>",FalseAlarms,"<br>",
+#                        "<b>Warning Count: </b>",Warning_Count,"<br>",
+#                        "<b>Concern Events: </b>",Concern_Events,"<br>",
+#                        "<b>Events: </b>",Events),
+#           hoverinfo="text",
+#           color=~`Rate Type`) %>%
+#   
+#   layout(xaxis = list(title="<b>Warn Threshold</b>",
+#                       tickvals = seq(0,10e-6,2e-6),
+#                       ticktext = seq(0,10e-6,2e-6) %>% formatC(format="e",digits=2),
+#                       tickfont = list(size = 13),
+#                       tickangle=45,
+#                       gridcolor="#333333"),
+#          yaxis = list(title="<b>Confusion Rate</b>",
+#                       gridcolor = "#333333"),
+#          plot_bgcolor  = "#444444",
+#          paper_bgcolor = "#444444",
+#          font = list(color = '#FFFFFF')
+#   )
+# 
+# 
+# 
+# 
+# 
+# save(concernRates_plot,file="products/concernRates_plot.RData")
+
+
+
+
+
+# FP against FN plot
+concernRates_plot <- 
+concernRates %>% 
   plot_ly(type="scatter",
           mode="lines",
-          x=~log(Warn_Threshold),
-          y=~Rate,
-          color=~`Rate Type`) %>%
-  layout(title = '<b>5 days to TCA and 1e-5 Concern Probability\nConcern Rates</b>',
-         xaxis = list(title="<b>Warn Threshold</b>",
-                      tickvals = c(-20,-17.5,-15,-12.5,-10),
-                      ticktext = c(-20,-17.5,-15,-12.5,-10) %>% exp() %>% formatC(format="e",digits=2),
-                      tickfont = list(size = 10),
-                      tickangle=45),
-         yaxis = list(title="<b>Rate</b>")
+          x=~log(`False Positive`),
+          y=~`False Negative`,
+          text=~paste0("<b>Warning Threshold: </b>",Warn_Threshold,"<br>",
+                       "<b>Missed Concern Events: </b>",Missed,"<br>",
+                       "<b>False Alarms: </b>",FalseAlarms,"<br>",
+                       "<b>Warning Count: </b>",Warning_Count,"<br>",
+                       "<b>Concern Events: </b>",Concern_Events,"<br>",
+                       "<b>Events: </b>",Events),
+          hoverinfo="text",
+          color=I("#2359c4"),
+          #marker=list(size=3.5),
+          line=list(width=3.5)
+    ) %>%
+  
+  layout(
+    xaxis = list(title="<b>False Alarm Rate (FP)</b>",
+                 tickvals = seq(-10,-4,1),
+                 ticktext = seq(-10,-4,1) %>% exp() %>% formatC(format="e",digits=2),
+                 gridcolor="#333333"
+            ),
+    yaxis = list(title="<b>Missed Concern Event Rate (FN)</b>",
+                 gridcolor="#333333",
+                 zeroline = TRUE,
+                 zerolinecolor="#333333"),
+    plot_bgcolor  = "#444444",
+    paper_bgcolor = "#444444",
+    font = list(color = '#FFFFFF')
   )
 
-
-save(concernRates,file="products/concernRates.RData")
-
-
+save(concernRates_plot,file="products/concernRates_plot.RData")
 # Function Demo ####
 
 # Test 
