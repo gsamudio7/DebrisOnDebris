@@ -1,6 +1,8 @@
 ---
 title: "Space conjunction analysis in support of USSPACECOM"
-output: flexdashboard::flex_dashboard
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
 runtime: shiny
 ---
 
@@ -75,7 +77,7 @@ data <- data  %>%group_by(Reference) %>%
 Confusion Matrix  {data-navmenu="More Analysis"}
 ===================================== 
 
-Column {.sidebar} {data-width=250}
+Column {.sidebar} 
 -----------------------------------------------------------------------
 
 Space conjunction analysis in support of USSPACECOM. Choose the selected parameters.
@@ -146,9 +148,11 @@ react <- eventReactive(input$MakeUpdates, {make_data()})
 
 
 
-Column
+Row {.tabset .tabset-fade}
 -----------------------------------------------------------------------
+
 ### Concern Category A 
+
 
 ```{r}
 renderPlot({
@@ -157,6 +161,16 @@ conf_matrix_plot(dfA, 1)})
 
 ```
     
+### Chart B 
+
+```{r}
+
+```
+
+
+Row {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
 ### Concern Category B 
 
 ```{r}
@@ -165,6 +179,16 @@ renderPlot({
 conf_matrix_plot(dfB, 1)})
 ```
 
+### DFD
+
+```{r}
+
+```
+
+
+Row {.tabset .tabset-fade}
+-----------------------------------------------------------------------
+
 ### Concern Category C 
 
 ```{r}
@@ -172,7 +196,15 @@ renderPlot({
    dfC <- react()[[3]]
 
 conf_matrix_plot(dfC, 1)})
+
 ```
+
+### Blahd 
+
+```{r}
+
+```
+
 
  New Page {data-navmenu="More Analysis"}
 =====================================
