@@ -17,8 +17,9 @@ h1 {
   font-size: 2em;
   border-bottom: 1px solid #D3D3D3;
   font-family: 'RobotoBold', sans-serif;
-  color:  #D3D3D3;
+  color:  #2359c4;
   text-transform: capitalize;
+  font-weight: bold;
 }
 
 h2 {
@@ -27,6 +28,7 @@ h2 {
   font-family: 'RobotoBold', sans-serif;
   font-weight: bold;
   text-transform: capitalize;
+  color:  #2359c4;
 }
 
 h3 {

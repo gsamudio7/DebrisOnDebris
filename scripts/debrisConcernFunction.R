@@ -369,7 +369,8 @@ Pc_by_TCA_plot <- concernSummary_at_TOI[fragNum=="PcBest"] %>%
     type="box",
     y=~log(Pc_at_TOI),
     x=~TCA_Bin,
-    hoverinfo="none"
+    hoverinfo="none",
+    color=I("#2359c4")
   ) %>%
   layout(
     yaxis = list(title="<b>Collision Probability</b>",
@@ -466,41 +467,41 @@ concernRates <- lapply(
   concernData=concernSummary,
   days_to_TCA=5) %>% rbindlist() 
 
-# Plot
-concernRates_plot <- 
-
-concernRates %>%
-  plot_ly(type="scatter",
-          mode="lines",
-          x=~Warn_Threshold,
-          y=~Rate,
-          text=~paste0("<b>Warning Threshold: </b>",Warn_Threshold,"<br>",
-                       "<b>Missed Concern Events: </b>",Missed,"<br>",
-                       "<b>False Alarms: </b>",FalseAlarms,"<br>",
-                       "<b>Warning Count: </b>",Warning_Count,"<br>",
-                       "<b>Concern Events: </b>",Concern_Events,"<br>",
-                       "<b>Events: </b>",Events),
-          hoverinfo="text",
-          color=~`Rate Type`) %>%
-  
-  layout(xaxis = list(title="<b>Warn Threshold</b>",
-                      tickvals = seq(0,10e-6,2e-6),
-                      ticktext = seq(0,10e-6,2e-6) %>% formatC(format="e",digits=2),
-                      tickfont = list(size = 13),
-                      tickangle=45,
-                      gridcolor="#333333"),
-         yaxis = list(title="<b>Confusion Rate</b>",
-                      gridcolor = "#333333"),
-         plot_bgcolor  = "#444444",
-         paper_bgcolor = "#444444",
-         font = list(color = '#FFFFFF')
-  )
-
-
-
-
-
-save(concernRates_plot,file="products/concernRates_plot.RData")
+# # Plot
+# concernRates_plot <- 
+# 
+# concernRates %>%
+#   plot_ly(type="scatter",
+#           mode="lines",
+#           x=~Warn_Threshold,
+#           y=~Rate,
+#           text=~paste0("<b>Warning Threshold: </b>",Warn_Threshold,"<br>",
+#                        "<b>Missed Concern Events: </b>",Missed,"<br>",
+#                        "<b>False Alarms: </b>",FalseAlarms,"<br>",
+#                        "<b>Warning Count: </b>",Warning_Count,"<br>",
+#                        "<b>Concern Events: </b>",Concern_Events,"<br>",
+#                        "<b>Events: </b>",Events),
+#           hoverinfo="text",
+#           color=~`Rate Type`) %>%
+#   
+#   layout(xaxis = list(title="<b>Warn Threshold</b>",
+#                       tickvals = seq(0,10e-6,2e-6),
+#                       ticktext = seq(0,10e-6,2e-6) %>% formatC(format="e",digits=2),
+#                       tickfont = list(size = 13),
+#                       tickangle=45,
+#                       gridcolor="#333333"),
+#          yaxis = list(title="<b>Confusion Rate</b>",
+#                       gridcolor = "#333333"),
+#          plot_bgcolor  = "#444444",
+#          paper_bgcolor = "#444444",
+#          font = list(color = '#FFFFFF')
+#   )
+# 
+# 
+# 
+# 
+# 
+# save(concernRates_plot,file="products/concernRates_plot.RData")
 
 
 
@@ -520,8 +521,9 @@ concernRates %>%
                        "<b>Concern Events: </b>",Concern_Events,"<br>",
                        "<b>Events: </b>",Events),
           hoverinfo="text",
+          color=I("#2359c4"),
           #marker=list(size=3.5),
-          line=list(width=2.5)
+          line=list(width=3.5)
     ) %>%
   
   layout(
@@ -539,7 +541,7 @@ concernRates %>%
     font = list(color = '#FFFFFF')
   )
 
-
+save(concernRates_plot,file="products/concernRates_plot.RData")
 # Function Demo ####
 
 # Test 

@@ -16,7 +16,8 @@ output:
     self_contained: yes
     toc: yes
     toc_float: yes
-    toc_depth: 3
+    toc_depth: 2
+    
 ---
 
 
@@ -36,9 +37,11 @@ output:
 <center>
 <img src="assets/MIT-Orbit-Debris_0.jpeg" width="80%"/> 
 <br>
+
 <b>Figure 1:</b> Picture from [MIT news website](https://news.mit.edu/2017/space-junk-shards-teflon-0619) depicting the large volume of space debris orbiting the Earth at ~17,500 mph.
 </center>
 <br>
+
 <br>
 
 ```{r setUp, include=FALSE}
@@ -70,6 +73,10 @@ options(scipen=99)
     - We can visualize the missed concern event and false alarm risk space.
     - We have developed an application to explore various warning thresholds.
 
+<br>
+
+<br>
+
 # Problem Formulation
 - <b>Problem Statement:</b> Under what circumstances should debris-on-debris collision warnings be used?
     - What probability of collision should be used as a surrogate for an actual event of concern?
@@ -78,7 +85,11 @@ options(scipen=99)
 
 - <b>Mission Statement:</b> Recommend debris collision notification thresholds and develop a mechanism to explore the notification decision space to assess risk of debris-on-debris collisions in space. 
 
-# Exploratory Data Analysis {.tabset}
+<br>
+
+<br>
+
+# Exploratory Data Analysis 
 
 - <b>Questions:</b>
     - How is the Collision Probability distributed?
@@ -90,6 +101,8 @@ options(scipen=99)
 
     - Summarize by each event to show the Collision Probability for each fragment size at the last recorded time, for each binned days to TCA.
     
+<br>
+
 <br>
 
 ## Collision Probability Density
@@ -108,19 +121,31 @@ zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 
 ```
 </center>
+<br>
 
-```{r eda_plot1, echo=FALSE, fig.cap="<b>Figure 2: </b>Collision Probability within One Day of TCA"}
+<center>
+<b>Figure 2: Collision Probability within One Day of TCA</b>
+</center>
+<br>
+
+```{r eda_plot1, echo=FALSE}
 load("products/Pc_at_1_day.RData")
 Pc_at_1_day
 ```
 
+<br>
+
 We use,
 <br>
+
 <center>
 $\text{Collision Probabilty} >= 1\text{e-}5 \text{ and days to TCA} < 1 \text{ day,}$ 
 </center>
 <br>
+
 as a surrogate to label a concern event. 
+
+<br>
 
 ## Concern Event Frequency 
 How is our visibility of concern events limited?
@@ -135,40 +160,64 @@ concernCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 
 ```
 </center>
+<br>
 
 We focus our initial analysis on concern events with fragment size of $>= 1$ fragment. Future methodology will include events with higher fragment sizes.
+<br>
 
-```{r eda_plot2, echo=FALSE, fig.cap="<b>Figure 3: </b>Concern Event Count over Time"}
+<br>
+
+<center>
+<b>Figure 3: Concern Event Count over Time</b>
+</center>
+<br>
+
+```{r eda_plot2, echo=FALSE}
 load("products/newConcernSummary_plot.RData")
 newConcernSummary_plot
 ```
+
 <b>Conclusions:</b>
 
 - At $5 \text{ days to TCA}$ the number of new concern events drastically increases.
 - We will only have visibility of about $50%$ of concern events at $5 \text{ days to TCA}$.
 - There is an advantage to a warning time interval within 5 days.
+<br>
+
+<br>
 
 ## Collision Probability Variability
+
 - Does the $\text{Collision Probability}$ increase as we aproach $\text{TCA}$?
 - Should we expect to have a lower warning threshold at $5 \text{ days to TCA}$
 
-```{r eda_plot3, echo=FALSE, fig.cap="<b>Figure 4: </b>Collision Probability as TCA Varies"}
+<br>
+
+<center>
+<b>Figure 4: Collision Probability as TCA Varies</b>
+</center>
+<br>
+
+```{r eda_plot3, echo=FALSE}
 load("products/Pc_by_TCA_plot.RData")
 Pc_by_TCA_plot
 ```
+<br>
+
 <b>Conclusions:</b>
 
 - The variability expands slightly, but there is not overwhelming evidence of an increase in the $\text{Collision Probabilty}$.
 - We consider the following range for $\text{Collision Probability}$ warning thresholds:
-
 <br>
+
 <center>
 $1.94\text{e-}22 <= Pc\_warn <= 1\text{e-}5$,
 </center>
 <br>
+
 where $Pc\_warn$ is the $\text{Collision Probability}$ that triggers a warning.
 
-
+<br>
 
 # Risk Tradespace
 We need to evaluate warning thresholds by examining the trade space between risk aversion and tolerance.
@@ -176,6 +225,7 @@ We need to evaluate warning thresholds by examining the trade space between risk
 We have the following working definitions:
 
 <br>
+
 <center>
 $\text{Concern Event} := \text{Collision Probability} <= 1\text{e-}5 \text{ and days to TCA < 1 day}$
 <br>
@@ -186,11 +236,19 @@ $\text{FN} := \text{Number of Concern Events that did not trigger a warning at 5
 $\text{FP} := \text{Number of false alarms, where warned events at 5 days to TCA did not become Concern Events}$
 <br>
 
-</center>
-
 <br>
 
-```{r eda_plot4, echo=FALSE, fig.cap="<b>Figure 5: </b>Confusion Rates at Five Days to TCA\nand Concern Prop = 1e-5",fig.width=4, fig.show='hold'}
+</center>
+
+We can now explore how the warning threshold effects the $\text{FP}$ and $\text{FN}$.
+
+<br>
+<center>
+<b>Figure 5: Confusion Rates at Five Days to TCA and Concern Prop = 1e-5</b>
+</center>
+<br>
+
+```{r eda_plot4, echo=FALSE}
 load("products/concernRates_plot.RData")
 concernRates_plot
 ```
