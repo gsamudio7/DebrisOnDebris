@@ -397,7 +397,18 @@ Pc_concern <- 1e-5
 (P <- concernSummary[fragNum=="PcBest" & Pc_min >= Pc_concern,.N]) # 58
 (N <- concernSummary[fragNum=="PcBest" & Pc_min < Pc_concern,.N]) # 48193
 
-# Produce confusion matrix
+
+# Imports for plot ####
+library(data.table)
+library(dplyr)
+library(plotly)
+library(RColorBrewer)
+
+# Loads two data sets, concernSummary and concernSummary_at_TOI (time of interest)
+load("data/concernData.RData")
+
+# Debris Confusion Function ####
+
 debrisConfusion <- function(concernData_at_TOI,concernData,
                             Pc_warn,
                             days_to_TCA,
@@ -457,7 +468,7 @@ debrisConfusion <- function(concernData_at_TOI,concernData,
   return(result_data_table)
 }
 
-# Get data for a range of values
+# Get data for a range of values ####
 concernRates <- lapply(
   seq(from=1.94e-22,
       to=1e-5,
@@ -467,47 +478,7 @@ concernRates <- lapply(
   concernData=concernSummary,
   days_to_TCA=5) %>% rbindlist() 
 
-# # Plot
-# concernRates_plot <- 
-# 
-# concernRates %>%
-#   plot_ly(type="scatter",
-#           mode="lines",
-#           x=~Warn_Threshold,
-#           y=~Rate,
-#           text=~paste0("<b>Warning Threshold: </b>",Warn_Threshold,"<br>",
-#                        "<b>Missed Concern Events: </b>",Missed,"<br>",
-#                        "<b>False Alarms: </b>",FalseAlarms,"<br>",
-#                        "<b>Warning Count: </b>",Warning_Count,"<br>",
-#                        "<b>Concern Events: </b>",Concern_Events,"<br>",
-#                        "<b>Events: </b>",Events),
-#           hoverinfo="text",
-#           color=~`Rate Type`) %>%
-#   
-#   layout(xaxis = list(title="<b>Warn Threshold</b>",
-#                       tickvals = seq(0,10e-6,2e-6),
-#                       ticktext = seq(0,10e-6,2e-6) %>% formatC(format="e",digits=2),
-#                       tickfont = list(size = 13),
-#                       tickangle=45,
-#                       gridcolor="#333333"),
-#          yaxis = list(title="<b>Confusion Rate</b>",
-#                       gridcolor = "#333333"),
-#          plot_bgcolor  = "#444444",
-#          paper_bgcolor = "#444444",
-#          font = list(color = '#FFFFFF')
-#   )
-# 
-# 
-# 
-# 
-# 
-# save(concernRates_plot,file="products/concernRates_plot.RData")
-
-
-
-
-
-# FP against FN plot
+# FP against FN plot ####
 concernRates_plot <- 
 concernRates %>% 
   plot_ly(type="scatter",

@@ -254,9 +254,9 @@ load("products/concernRates_plot.RData")
 concernRates_plot
 ```
 
-Hovering over the plot, we see the that the warning threshold decreases as FN decreases and as FP increases. In this case, the more severe mistake is FN (not warning for a concern event), which is our Type II error, and the FP (false alarm, Type I error) has much lower rates. The FP rates are so low because of the high number of events with Collision Probabilities falling below $1\text{e-}5$ within one day to TCA.
+Hovering over the plot, we see that the warning threshold decreases as FN decreases and as FP increases. In this case, the more severe mistake is FN (not warning for a concern event), which is our Type II error. The FP (false alarm, Type I error) has much lower rates because of the high number of events with Collision Probabilities falling below $1\text{e-}5$ within one day to TCA.
 
-We recommend this chart to inform warning thresholds for five days to TCA, when a concern event is defined above.
+We recommend this chart to inform warning thresholds for five days to TCA, for concern events previously defined.
 
 # Way Forward 
 - Finalize warning threshold point estimate formulation.
