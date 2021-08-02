@@ -16,7 +16,7 @@ output:
     self_contained: yes
     toc: yes
     toc_float: yes
-    toc_depth: 2
+    toc_depth: 3
 ---
 
 
@@ -34,9 +34,10 @@ output:
 
 </style>
 <center>
-<img src="assets/MIT-Orbit-Debris_0.jpeg" width="95%"/> 
+<img src="assets/MIT-Orbit-Debris_0.jpeg" width="80%"/> 
+<br>
+<b>Figure 1:</b> Picture from [MIT news website](https://news.mit.edu/2017/space-junk-shards-teflon-0619) depicting the large volume of space debris orbiting the Earth at ~17,500 mph.
 </center>
-
 <br>
 <br>
 
@@ -77,7 +78,8 @@ options(scipen=99)
 
 - <b>Mission Statement:</b> Recommend debris collision notification thresholds and develop a mechanism to explore the notification decision space to assess risk of debris-on-debris collisions in space. 
 
-# Exploratory Data Analysis {.tabset .tabset-fade}
+# Exploratory Data Analysis {.tabset}
+
 - <b>Questions:</b>
     - How is the Collision Probability distributed?
     - How does the rate of new concern events change over time?
@@ -93,7 +95,7 @@ options(scipen=99)
 ## Collision Probability Density
 We need to find a range of values to appropriately label events of concern.
 
-### How many events have $\text{Collision Probability} = 0$ when $\text{days to TCA} < 1$?
+How many events have $\text{Collision Probability} = 0$ when $\text{days to TCA} < 1$?
 
 <center>
 ```{r EDA1, echo=FALSE}
@@ -107,7 +109,7 @@ zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 ```
 </center>
 
-```{r eda_plot1, echo=FALSE, fig.cap="<b>Figure 1: </b>Collision Probability within One Day of TCA"}
+```{r eda_plot1, echo=FALSE, fig.cap="<b>Figure 2: </b>Collision Probability within One Day of TCA"}
 load("products/Pc_at_1_day.RData")
 Pc_at_1_day
 ```
@@ -123,7 +125,7 @@ as a surrogate to label a concern event.
 ## Concern Event Frequency 
 How is our visibility of concern events limited?
 
-### How many Concern Events if the threshold is $1\text{e-}5$?
+How many Concern Events if the threshold is $1\text{e-}5$?
 
 <center>
 ```{r EDA2, echo=FALSE}
@@ -136,7 +138,7 @@ concernCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
 
 We focus our initial analysis on concern events with fragment size of $>= 1$ fragment. Future methodology will include events with higher fragment sizes.
 
-```{r eda_plot2, echo=FALSE, fig.cap="<b>Figure 2: </b>Concern Event Count over Time"}
+```{r eda_plot2, echo=FALSE, fig.cap="<b>Figure 3: </b>Concern Event Count over Time"}
 load("products/newConcernSummary_plot.RData")
 newConcernSummary_plot
 ```
@@ -150,7 +152,7 @@ newConcernSummary_plot
 - Does the $\text{Collision Probability}$ increase as we aproach $\text{TCA}$?
 - Should we expect to have a lower warning threshold at $5 \text{ days to TCA}$
 
-```{r eda_plot3, echo=FALSE, fig.cap="<b>Figure 3: </b>Collision Probability as TCA Varies"}
+```{r eda_plot3, echo=FALSE, fig.cap="<b>Figure 4: </b>Collision Probability as TCA Varies"}
 load("products/Pc_by_TCA_plot.RData")
 Pc_by_TCA_plot
 ```
@@ -188,7 +190,7 @@ $\text{FP} := \text{Number of false alarms, where warned events at 5 days to TCA
 
 <br>
 
-```{r eda_plot4, echo=FALSE, fig.cap="<b>Figure 4: </b>Confusion Rates at Five Days to TCA\nand Concern Prop = 1e-5",fig.width=4, fig.show='hold'}
+```{r eda_plot4, echo=FALSE, fig.cap="<b>Figure 5: </b>Confusion Rates at Five Days to TCA\nand Concern Prop = 1e-5",fig.width=4, fig.show='hold'}
 load("products/concernRates_plot.RData")
 concernRates_plot
 ```
