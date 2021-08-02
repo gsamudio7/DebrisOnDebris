@@ -32,7 +32,7 @@ h2 {
 }
 
 h3 {
-  font-size: 1.1em;
+  font-size: 0.9em;
   font-family: 'RobotoBold', sans-serif;
   font-weight: bold;
 }
@@ -66,6 +66,7 @@ a {
   list-style-type: circle;
   background-color: ##000000;
   color: #2359c4;
+  0.9em;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {

@@ -12,7 +12,9 @@ author:
 output:
   html_document:
     includes:
+      before_body: assets/header.html
       in_header: assets/fav.html
+      after_body: assets/header.html
     css: assets/css/html_report.css
     highlight: haddock
     self_contained: yes
@@ -27,12 +29,13 @@ output:
 <style>
 
 #TOC {
-  margin-top: 20px;
+  margin-top: 40px;
   background: url("https://ewscripps.brightspotcdn.com/dims4/default/9d34d32/2147483647/strip/true/crop/1280x720+0+0/resize/1280x720!/quality/90/?url=http%3A%2F%2Fewscripps-brightspot.s3.amazonaws.com%2F42%2Fb3%2Ff10c7ff1498880ea9768df26cf47%2Fus-space-command.jpg");
   background-size: contain;
-  padding-top: 170px !important;
+  padding-top: 165px !important;
   background-repeat: no-repeat;
   border: None;
+  width: 1;
 }
 
 </style>
@@ -40,7 +43,8 @@ output:
 <img src="assets/MIT-Orbit-Debris_0.jpeg" width="80%"/> 
 <br>
 
-<b>Figure 1:</b> Picture from [MIT news website](https://news.mit.edu/2017/space-junk-shards-teflon-0619) depicting the large volume of space debris orbiting the Earth at ~17,500 mph.
+<b>Figure 1: Space debris orbiting Earth.</b><br>
+Image from [MIT news website](https://news.mit.edu/2017/space-junk-shards-teflon-0619) depicting the large volume of space debris orbiting the Earth at ~17,500 mph.
 </center>
 <br>
 
@@ -222,13 +226,13 @@ We have the following working definitions:
 <br>
 
 <center>
-$\text{Concern Event} := \text{Collision Probability} <= 1\text{e-}5 \text{ and days to TCA < 1 day}$
+$\text{Concern Event} := \text{Collision Probability} <= 1\text{e-}5 \text{ and days to TCA < 1 day}$,
 <br>
 
-$\text{FN} := \text{Number of Concern Events that did not trigger a warning at 5 days to TCA}$
+$\text{FN} := \text{Number of Concern Events that did not trigger a warning at 5 days to TCA}$, and
 <br>
 
-$\text{FP} := \text{Number of false alarms, where warned events at 5 days to TCA did not become Concern Events}$
+$\text{FP} := \text{Number of false alarms, where warned events at 5 days to TCA did not become Concern Events}$.
 <br>
 
 <br>

@@ -104,8 +104,7 @@ Pc_at_1_day <-
     type="histogram",
     x=~log(Pc_min),
     color=~`Fragment Size`,
-    nbinsx=35#,
-    #colors=colorRampPalette(brewer.pal(5,"Spectral"))(5)
+    nbinsx=35
   ) %>%
   layout(xaxis = list(title="<b>Collision Probability</b>",
                       tickvals = seq(-720,-20,100),
@@ -258,7 +257,8 @@ newConcernSummary_plot <- newConcernSummary %>%
   x=~TCA_Bin,
   y=~concernCount,
   color=I("#222222"),
-  name="Total"
+  name="Total",
+  hoverinfo="none"
 ) %>%
   
   add_trace(
