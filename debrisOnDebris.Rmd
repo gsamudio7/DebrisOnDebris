@@ -11,6 +11,8 @@ author:
     MAJ Gabe Samudio](https://github.com/gsamudio7/DebrisOnDebris)"
 output:
   html_document:
+    includes:
+      in_header: assets/fav.html
     css: assets/css/html_report.css
     highlight: haddock
     self_contained: yes
