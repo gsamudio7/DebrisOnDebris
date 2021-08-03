@@ -21,7 +21,10 @@ output:
     toc: yes
     toc_float: yes
     toc_depth: 2
-    
+nocite: '@*'
+bibliography:
+- assets/bib/Rpackages.bib
+- assets/bib/debrisOnDebris.bib
 ---
 
 
@@ -260,6 +263,8 @@ We recommend this chart to inform warning thresholds for five days to TCA, for c
 
 # Way Forward 
 - Finalize warning threshold point estimate formulation.
-- Employ Monte Carlo method to explore the variability of the point estimate, and deliver a $95% \text{bootstrap confidence inverval}$ for warning threshold at five days to TCA.
+- Employ Monte Carlo method to explore the variability of the point estimate, and deliver a $95% \text{bootstrap confidence inverval}$ for warning threshold at five days to TCA [@10.1214/aos/1176344552].
 - Repeat this methodology for 4, 3, 2 days to TCA.
 - Iterate on the R Shiny Application based on client feedback.
+
+# Works Cited 
