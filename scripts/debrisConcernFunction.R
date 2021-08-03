@@ -264,7 +264,7 @@ newConcernSummary_plot <- newConcernSummary %>%
   add_trace(
     y=~newCount,
     name="New",
-    color=I("royalblue3")
+    color=I("#2359c4")
   ) %>%
   
   layout(
@@ -291,9 +291,62 @@ length(events_at_5_and_1)
 events_at_1_and_not_at_5 <- concernSummary_at_TOI[eventNumber %ni% events_at_5 & TCA_Bin==1,
                                                   unique(eventNumber)]
 length(events_at_1_and_not_at_5)
+events_at_5_and_not_at_1 <- setdiff(events_at_5,concernSummary[,unique(eventNumber)])
 
 # Verify
 length(events_at_5_and_1) + length(events_at_1_and_not_at_5) == concernSummary_at_TOI[TCA_Bin==1,uniqueN(eventNumber)]
+
+# Wrangle data to show
+## event PC at 5 / PC at 1 / makes it through (Y/N)
+deltaSummary <- rbindlist(list(
+  concernSummary_at_TOI[eventNumber %in% events_at_5_and_1 &
+                          fragNum=="PcBest" &
+                          TCA_Bin==5, .(eventNumber,TCA_Bin,Pc=Pc_at_TOI,Censored=FALSE)],
+  concernSummary[eventNumber %in% events_at_5_and_1 &
+                          fragNum=="PcBest", .(eventNumber,TCA_Bin=1,Pc=Pc_min,Censored=FALSE)],
+  concernSummary_at_TOI[eventNumber %in% events_at_5_and_not_at_1 &
+                          fragNum=="PcBest" &
+                          TCA_Bin==5, .(eventNumber,TCA_Bin,Pc=Pc_at_TOI,Censored=TRUE)],
+  data.table("eventNumber"=events_at_5_and_not_at_1,
+             "TCA_Bin"=1,
+             "Pc"=0,
+             "Censored"=TRUE)
+))
+setorder(deltaSummary,-"TCA_Bin")
+delta_plot_summary <- deltaSummary[,.(delta=diff(Pc)),by=c("eventNumber","Censored")] 
+
+
+
+delta_plot_summary[,"Delta" := ifelse(delta > 0, "> 0",
+                                      ifelse(delta == 0, "= 0","< 0"))]
+
+
+deltaCountSummary <- merge(
+  data.table("Total"=c(delta_plot_summary[Censored==TRUE,.N],
+                     delta_plot_summary[Censored==FALSE,.N]),
+           "Censored"=c(TRUE,FALSE)
+),
+
+  delta_plot_summary[,.(Count=.N),by=c("Censored","Delta")],
+  by="Censored"
+)
+deltaCountSummary[,"Proportion" := round(Count/Total,3)]
+deltaCountSummary[,!"Total"]
+
+delta_plot_summary %>%
+  plot_ly(
+    type="histogram",
+    x=~delta,
+    nbinsx=10,
+    color=~Censored
+  ) %>%
+  layout(
+    xaxis = list(title="<b>Collision Probability Delta\nat 5 and 1 days to TCA</b>",
+                 tickvals = seq(-700,0,100),
+                 ticktext = seq(-700,0,100) %>% exp() %>% formatC(format="e",digits=2),
+                 tickfont = list(size = 10),
+                 gridcolor="#333333"))
+  
 
 # What is the distribution of Pc at 5 for events that make it to 1
 concernSummary_at_TOI[fragNum=="PcBest" & 

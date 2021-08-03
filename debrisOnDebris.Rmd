@@ -75,9 +75,9 @@ options(scipen=99)
 # Executive Summary
 - Charged with informing the process to develop a debris on debris collision warning threshold to mitigate future collision risk and limit false alarms.<br><br>
 - The study has focused on the following parameters:
-    - Fragment size of at least 1.
-    - Five days to time of closest approach (TCA).
-    - Concern Events terminology defined as $\text{Collision Probability} >= 1\text{e-}5$ within a day to TCA.<br><br>
+    - Debris collision results in at least <b>one fragment</b> at least five centimeters in diameter.
+    - <b>Five</b> days to time of closest approach (TCA).
+    - Concern Events terminology defined as <b>$\text{Collision Probability} >= 1\text{e-}5$</b> within a day to TCA.<br><br>
 - Study progress:
     - We can visualize the missed concern event and false alarm risk space.
     - We have developed an application to explore various warning thresholds.<br><br>
@@ -101,7 +101,7 @@ options(scipen=99)
 ## Collision Probability Density
 We need to find a range of values to appropriately label events of concern.
 
-How many events have $\text{Collision Probability} = 0$ when $\text{days to TCA} < 1$?
+How many events have $\text{Collision Probability} = 0$ when within one day to TCA?
 
 <center>
 ```{r EDA1, echo=FALSE}
@@ -177,8 +177,8 @@ newConcernSummary_plot
 
 <b>Conclusions:</b>
 
-- At $5 \text{ days to TCA}$ the number of new concern events drastically increases.
-- We will only have visibility of about $50%$ of concern events at $5 \text{ days to TCA}$.
+- At five days to TCA the number of new concern events drastically increases.
+- We will only have visibility of about $50%$ of concern events at five days to TCA.
 - There is an advantage to a warning time interval within 5 days.
 
 <br>
@@ -187,8 +187,8 @@ newConcernSummary_plot
 
 ## Collision Probability Variability
 
-- Does the $\text{Collision Probability}$ increase as we aproach $\text{TCA}$?
-- Should we expect to have a lower warning threshold at $5 \text{ days to TCA}$
+- Does the $\text{Collision Probability}$ increase as we approach TCA?
+- Should we expect to have a lower warning threshold at five days to TCA?
 
 <br>
 
@@ -229,13 +229,13 @@ We have the following working definitions:
 <br>
 
 <center>
-$\text{Concern Event} := \text{Collision Probability} <= 1\text{e-}5 \text{ and days to TCA < 1 day}$,
+$\text{Concern Event} := \text{Collision Probability} >= 1\text{e-}5 \text{ and days to TCA < 1 day}$,
 <br>
 
-$\text{FN} := \text{Number of Concern Events that did not trigger a warning at 5 days to TCA}$, and
+$\text{False Negative (FN)} := \text{Number of Concern Events that did not trigger a warning at 5 days to TCA}$, and
 <br>
 
-$\text{FP} := \text{Number of false alarms, where warned events at 5 days to TCA did not become Concern Events}$.
+$\text{False Positive (FP)} := \text{Number of false alarms, where warned events at 5 days to TCA did not become Concern Events}$.
 <br>
 
 <br>
