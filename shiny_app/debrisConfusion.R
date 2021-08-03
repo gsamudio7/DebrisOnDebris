@@ -3,7 +3,7 @@ debrisConfusion <- function(concernData_at_TOI,concernData,
                             days_to_TCA,
                             Pc_concern=1e-5,
                             frag_number_Pc="PcBest",
-                            verbose=FALSE,
+                            verbose=TRUE,
                             rate=TRUE) {
   
   df <- merge(
