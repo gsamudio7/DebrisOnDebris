@@ -201,6 +201,11 @@ concernSummary_at_TOI <- rbindlist(list(
 concernSummary_at_TOI[,"fragNum" := as.factor(fragNum)]
 concernSummary_at_TOI[,"Pc_at_TOI" := as.double(Pc_at_TOI)]
 
+# Remove all data with Pr Collision <= 1e-10
+concernSummary[Pc_min <= 1e-10,.N] # There's 237543
+concernSummary <- concernSummary[Pc_min > 1e-10]
+concernSummary_at_TOI <- concernSummary_at_TOI[Pc_at_TOI > 1e-10]
+
 # Save and push to Git
 save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
 
