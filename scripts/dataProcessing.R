@@ -164,35 +164,35 @@ concernSummary_at_TOI <- rbindlist(list(
   
   # PcBest
   events[!is.na(PcBest),
-     .(bool=time2TCA==max(time2TCA),
+     .(bool=time2TCA==min(time2TCA),
        fragNum="PcBest",
        Pc_at_TOI=PcBest),
      by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
   
   # PcFrag10
   events[!is.na(PcFrag10),
-     .(bool=time2TCA==max(time2TCA),
+     .(bool=time2TCA==min(time2TCA),
        fragNum="PcFrag10",
        Pc_at_TOI=PcFrag10),
      by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
   
   # PcFrag100
   events[!is.na(PcFrag100),
-     .(bool=time2TCA==max(time2TCA),
+     .(bool=time2TCA==min(time2TCA),
        fragNum="PcFrag100",
        Pc_at_TOI=PcFrag100),
      by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
   
   # PcFrag1000
   events[!is.na(PcFrag1000),
-     .(bool=time2TCA==max(time2TCA),
+     .(bool=time2TCA==min(time2TCA),
        fragNum="PcFrag1000",
        Pc_at_TOI=PcFrag1000),
      by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
   
   # PcFrag10000
   events[!is.na(PcFrag10000),
-     .(bool=time2TCA==max(time2TCA),
+     .(bool=time2TCA==min(time2TCA),
        fragNum="PcFrag10000",
        Pc_at_TOI=PcFrag10000),
      by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"]
@@ -208,4 +208,11 @@ concernSummary_at_TOI <- concernSummary_at_TOI[Pc_at_TOI > 1e-10]
 
 # Save and push to Git
 save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
+
+# Only focus on PcBest, PbFrag10, and PcFrag100
+concernSummary_at_TOI <- concernSummary_at_TOI[fragNum %in% c("PcBest","PcFrag10","PcFrag100")]
+
+# Save and push to Git
+save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
+
 
