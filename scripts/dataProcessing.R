@@ -166,7 +166,8 @@ concernSummary_at_TOI <- rbindlist(list(
   events[!is.na(PcBest),
      .(bool=time2TCA==min(time2TCA),
        fragNum="PcBest",
-       Pc_at_TOI=PcBest),
+       Pc_at_TOI=PcBest
+       ),
      by=c("TCA_Bin","eventNumber")][bool==TRUE,!"bool"],
   
   # PcFrag10
