@@ -211,8 +211,35 @@ concernSummary[Pc_min <= 1e-10,.N] # There's 237543
 concernSummary <- concernSummary[Pc_min > 1e-10]
 concernSummary_at_TOI <- concernSummary_at_TOI[Pc_at_TOI > 1e-10]
 
+# Relabel fragment size
+concernSummary[,"fragLabel" := case_when(
+  fragNum == "PcBest" ~ ">= 1",
+  fragNum == "PcFrag10" ~ ">= 10",
+  fragNum == "PcFrag100" ~ ">= 100"
+)]
+
+concernSummary_at_TOI[,"fragLabel" := case_when(
+  fragNum == "PcBest" ~ ">= 1",
+  fragNum == "PcFrag10" ~ ">= 10",
+  fragNum == "PcFrag100" ~ ">= 100"
+)]
+concernSummary <- concernSummary[,!"fragNum"]
+concernSummary_at_TOI <- concernSummary_at_TOI[,!"fragNum"]
+# Save and push to Git
+save(concernSummary,
+     concernSummary_at_TOI,
+     file="data/concernData.RData")
+
+# Merge
+debrisData <- merge(
+  concernSummary_at_TOI[TCA_Bin %in% c(5,4,3),c("eventNumber","Pc_at_TOI","fragLabel","TCA_Bin")],
+  concernSummary[,c("eventNumber","Pc_min","fragLabel")],
+  by=c("eventNumber","fragLabel")
+)
+
 # Save and push to Git
 save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
+save(debrisData,file="data/debrisData.RData")
 
 # Only focus on PcBest, PbFrag10, and PcFrag100
 concernSummary_at_TOI <- concernSummary_at_TOI[fragNum %in% c("PcBest","PcFrag10","PcFrag100")]
