@@ -75,24 +75,29 @@ options(scipen=99)
 # Executive Summary
 - Charged with informing the process to develop a debris on debris collision warning threshold to mitigate future collision risk and limit false alarms.<br><br>
 - The study has focused on the following parameters:
-    - Debris collision results in at least <b>one fragment</b> at least five centimeters in diameter.
-    - <b>Five</b> days to time of closest approach (TCA).
-    - Concern Events terminology defined as <b>$\text{Collision Probability} >= 1\text{e-}5$</b> within a day to TCA.<br><br>
+    - Debris collision results in at least **1, 10, and 100 fragments** at least five centimeters in diameter.
+    - **5, 4, and 3** days to time of closest approach (TCA).
+    - Concern Events terminology defined as **Collision Probability** $\bf{\ge\text{1e-5}}$ within a day to TCA.<br><br>
 - Final study implementations:
-    - Removed all observations with $<= 1\text{e-}10\text{ Collision Probability}$.
-    - Tested 
+    - Removed all observations with $\bf{\le 1\text{e-}10}$ Collision Probability.
+    - Tested **Warning Thresholds between** $\bf{1\text{e-8}\text{ and }1\text{e-5}}$.
+    - Evaluated Missed Alert verse False Alarm risk at **5, 4 and 5, and 3,4 and 5** days to TCA.
+    - Evaluated Short Notice Missed Alert verse False Alarm risk at **4, 3, and 2** days to TCA.<br><br>
+- Conclusions
+    - Performance increases as days to TCA decreases.
+    - Optimal Warning Thresholds depend on days to TCA.
+    - Variability in Collision Probability decreases as days to TCA decreases.<br><br>
 
 # Problem Formulation
 - <b>Problem Statement:</b> Under what circumstances should debris-on-debris collision warnings be used?
     - What probability of collision should be used as a surrogate for an actual event of concern?
-    - What probability of collision should trigger a warning at five days to TCA?
+    - What probability of collision should trigger a warning at five, four and three days to TCA?
     - How well can we do in warning for events occurring in the future?<br><br>
 - <b>Mission Statement:</b> Recommend debris collision notification thresholds and develop a mechanism to explore the notification decision space to assess risk of debris-on-debris collisions in space.<br><br>
 
 # Exploratory Data Analysis 
 - <b>Questions:</b>
     - How is the Collision Probability distributed?
-    - How does the rate of new concern events change over time?
     - How does the Collision Probability change over time?<br><br>
 - <b>Data Preparation:</b>
     - Summarize by each event to show the Collision Probability for each fragment size at the last recorded time, if that time is within a day of TCA.
@@ -106,9 +111,7 @@ We need to find a range of values to appropriately label events of concern.
 <center>
 <b>Figure 2: Collision Probability within One Day of TCA</b>
 </center>
-
 <br>
-
 ```{r eda_plot1, echo=FALSE}
 load("products/Pc_at_1_day.RData")
 Pc_at_1_day
@@ -119,7 +122,7 @@ Pc_at_1_day
 We use,
 
 <center>
-$\text{Collision Probabilty} >= 1\text{e-}5 \text{ and days to TCA} < 1 \text{ day,}$ 
+$\bf{\text{Collision Probabilty} \ge 1\text{e-5} \text{ and days to TCA} < 1 \text{ day,}}$ 
 </center>
 
 <br>
@@ -130,17 +133,15 @@ as a surrogate to label a concern event.
 
 ## Collision Probability Variability
 
-- Does the $\text{Collision Probability}$ increase as we approach TCA?
+- Does the Collision Probability increase as we approach TCA?
 - Should we expect to have a lower warning threshold at five days to TCA?
 
 <br>
 
 <center>
-<b>Figure 4: Collision Probability as TCA Varies</b>
+<b>Figure 3: Collision Probability as TCA Varies</b>
 </center>
-
 <br>
-
 ```{r eda_plot3, echo=FALSE}
 load("products/Pc_delta.RData")
 Pc_delta
@@ -149,18 +150,20 @@ Pc_delta
 
 <b>Conclusions:</b>
 
-- The variability expands slightly, but there is not overwhelming evidence of an increase in the $\text{Collision Probabilty}$.
-- We consider the following range for $\text{Collision Probability}$ warning thresholds:
+- The variability tightens slightly around 0 as TCA approaches.
+- Some evidence of a slight decrease in Collision Probability as TCA approaches.
+- No compelling evidence of an advantage in significantly varying Warning Threshold.
+- We use:
 
 <br>
 
 <center>
-$1.94\text{e-}22 <= Pc\_warn <= 1\text{e-}5$,
+$\bf{1\text{e-8} \le Pc\_warn \le 1\text{e-5}}$,
 </center>
 
 <br>
 
-where $Pc\_warn$ is the $\text{Collision Probability}$ that triggers a warning.
+where $\bf{Pc\_warn}$ is the Collision Probability that triggers a warning.
 
 <br>
 
@@ -168,74 +171,86 @@ where $Pc\_warn$ is the $\text{Collision Probability}$ that triggers a warning.
 We need to evaluate warning thresholds by examining the trade space between risk aversion and tolerance.
 
 We have the following working definitions:
-
 <br>
 
-<center>
-$\text{Concern Event} := \text{Collision Probability} >= 1\text{e-}5 \text{ and days to TCA < 1 day}$,
+<align>
+$\hspace{2.5cm}\bf{\text{Concern Event} := \text{Collision Probability} \ge 1\text{e-}5 \text{ and days to TCA < 1 day}}$
 <br>
-
-$\text{False Negative (FN)} := \text{Number of Concern Events that did not trigger a warning at 5 days to TCA}$, and
+$\hspace{2.5cm}\bf{\text{False Negative (FN)} := \text{# of Concern Events in a year that did not trigger a warning}}$
 <br>
-
-$\text{False Positive (FP)} := \text{Number of false alarms, where warned events at 5 days to TCA did not become Concern Events}$.
+$\hspace{2.5cm}\bf{\text{False Positive (FP)} := \text{# of False Alarms in a year}}$.
 <br>
+</align>
 
-<br>
-
-</center>
-
-We can now explore how the warning threshold effects the $\text{FP}$ and $\text{FN}$.
-
-<br>
-
-<center>
-<b>Figure 5: Confusion Rates at Five Days to TCA and Concern Prop = 1e-5</b>
-</center>
+We can now explore how the warning threshold affects the $\text{FP}$ and $\text{FN}$.
 
 <br>
 
 ## Five days to TCA
+
+<center>
+<b>Figure 4: Warning Performance at Five Days to TCA</b>
+</center>
+
 ```{r concern_plot1, echo=FALSE}
 load("products/concernCount_plots.RData")
 concernCount_5
 ```
 
-Hovering over the plot, we see that the warning threshold decreases as FN decreases and as FP increases. In this case, the more severe mistake is FN (not warning for a concern event), which is our Type II error. The FP (false alarm, Type I error) has much lower rates because of the high number of events with Collision Probabilities falling below $1\text{e-}5$ within one day to TCA.
-
-We recommend this chart to inform warning thresholds for five days to TCA, for concern events previously defined.
-
 ## Five and four days to TCA
+
+<center>
+<b>Figure 5: Warning Performance at Five and Four Days to TCA</b>
+</center>
+
 ```{r concern_plot2, echo=FALSE}
 concernCount_5_and_4
 ```
 
 ## Five, four, and three days to TCA
+
+<center>
+<b>Figure 6: Warning Performance at Five, Four and Three Days to TCA</b>
+</center>
+
 ```{r concern_plot3, echo=FALSE}
 concernCount_5_and_4_and_3
 ```
 
 # Risk Tradespace Short Notice {.tabset .tabset-fade}
+Recall a higher concentration of events that remain stable at three days to TCA. This implies that as TCA approaches, the Collision Probability changes less, which means our ability to correctly warn should improve. We explore short notice warning performance at 4, 3, and 2 days to TCA.
 
 ## Four days to TCA
+
+<center>
+<b>Figure 7: Warning Performance at Four Days to TCA</b>
+</center>
+
 ```{r concern_plot4, echo=FALSE}
 concernCount_4
 ```
 
 ## Three days to TCA
+
+<center>
+<b>Figure 8: Warning Performance at Three Days to TCA</b>
+</center>
+
 ```{r concern_plot5, echo=FALSE}
 concernCount_3
 ```
 
 ## Two days to TCA
+
+<center>
+<b>Figure 9: Warning Performance at Two Days to TCA</b>
+</center>
+
 ```{r concern_plot6, echo=FALSE}
 concernCount_2
 ```
 
 # Way Forward 
-- Finalize warning threshold point estimate formulation.
-- Employ Monte Carlo method to explore the variability of the point estimate, and deliver a $95% \text{bootstrap confidence inverval}$ for warning threshold at five days to TCA [@10.1214/aos/1176344552].
-- Repeat this methodology for 4, 3, 2 days to TCA.
-- Iterate on the R Shiny Application based on client feedback.
+- Stuff and things
 
-# Works Cited 
+# References
