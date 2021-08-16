@@ -14,13 +14,6 @@ library(dplyr)
 library(plotly)
 library(RColorBrewer)
 
-#setwd("shiny_app2")
-
-#source("scripts/debrisConfusion.R")
-#
-# Read in debrisCounfuction function
-#source("scripts/debrisConfusion.R")
-
 
 ui <- dashboardPage(
 
@@ -28,13 +21,10 @@ ui <- dashboardPage(
                     titleWidth = 350),
     dashboardSidebar(
         HTML('<center><img src="SPACECOM_logo.png" width="150"></center>'),
-        #img(src='SPACECOM_logo.png', width = 150, height = 150, align = "center"),
         p( paste("Space conjunction analysis in support of USSPACECOM. 
         Choose the parameters then press update.")),
+        
         # Number of Fragments
-        
-        #checkboxGroupInput("NumFrags")
-        
         checkboxGroupInput("NumFrags", label = "Number of fragments:",
                             choices = c("PcBest","PcFrag10","PcFrag100"), 
                            selected = c("PcBest","PcFrag10","PcFrag100")),
@@ -42,11 +32,7 @@ ui <- dashboardPage(
         sliderInput("DaysTCA", label = "Days to TCA",
                     min = 1, max = 8, value = 5, step = 1),
         
-        #threshold_Pc
-        
-        # sliderInput("PcWarn", label = "Warning Threshold",
-        #             min = 0.000000001, max = 0.001, value = 0.000001, step =0.00001),
-        
+        # Concern inputs
         textInput("inputA", "Concern Category A", 1e-5),
         textInput("inputB", "Concern Category B", 1e-6),
         textInput("inputC", "Concern Category C", 1e-7),
@@ -54,6 +40,7 @@ ui <- dashboardPage(
         actionButton("MakeUpdates", "Update")
     ),
     dashboardBody(
+        # add css custom to the app
         tags$head(
             tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
         ),
@@ -72,7 +59,7 @@ ui <- dashboardPage(
                 h4("Concern Category C"),
                 plotlyOutput("plot3", height = 235), width = 250))
         )
-    )
+    ) # end UI
 
 
 server <- function(input, output) {
@@ -118,7 +105,6 @@ server <- function(input, output) {
         dfC
     })
 
-    
-}
+} # end server function
 
 shinyApp(ui, server)
