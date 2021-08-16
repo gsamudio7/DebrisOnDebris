@@ -1,17 +1,26 @@
 ---
-title: "Space conjunction analysis in support of USSPACECOM"
+title: "Space Conjunction Analysis"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
+    theme:
+      version: 4
 runtime: shiny
 ---
 
+<style>                     
+.section-row {
+  background-color:red;
+  border-color:black;
+}
 
-
+</style>  
 
 ```{r global, include=FALSE}
 # load data in 'global' chunk so it can be shared by all users of the dashboard
 library(cowplot)
+library(remotes)
+library(bslib)
 library(tidyverse)
 library(flexdashboard)
 library(scales)
@@ -75,8 +84,8 @@ data <- data  %>%group_by(Reference) %>%
 }
 ```
 
-Confusion Matrix  {data-navmenu="More Analysis"}
-===================================== 
+
+
 
 Column {.sidebar} 
 -----------------------------------------------------------------------
@@ -103,7 +112,7 @@ sliderInput("DaysTCA", label = "Days to TCA",
 #threshold_Pc
 
 sliderInput("PcWarn", label = "Warning Threshold",
-            min = 2.06e-9, max = 1e-1, value = 2.06e-9, step =1e-4)
+            min = 0.000000001, max = 0.001, value = 0.000001, step =0.00001)
 
 textInput("inputA", "Concern Category A", 1e-3)
 textInput("inputB", "Concern Category B", 1e-4)
@@ -159,6 +168,7 @@ react <- eventReactive(input$MakeUpdates, {make_data()})
 Row {.tabset .tabset-fade}
 -----------------------------------------------------------------------
 
+
 ### Concern Category A 
 
 
@@ -168,7 +178,9 @@ renderPlot({
 conf_matrix_plot(dfA, 1)})
 
 ```
-    
+
+
+
 ### Rates Plot A
 
 ```{r}
@@ -223,10 +235,3 @@ renderPlotly({
 ```
 
 
- New Page {data-navmenu="More Analysis"}
-=====================================
-
-
-
- Yet another new Page {data-navmenu="More Analysis"}
-=====================================
