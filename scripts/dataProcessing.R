@@ -99,16 +99,17 @@ concernSummary[,"Fragment Size" := case_when(
 )]
 
 Pc_at_1_day <- 
-  concernSummary %>%
+  concernSummary[`Fragment Size` %in% c(">= 1",">= 10",">= 100")] %>%
   plot_ly(
     type="histogram",
     x=~log(Pc_min),
     color=~`Fragment Size`,
-    nbinsx=35
+    colors=c("blue","dodgerblue","gray"),
+    nbinsx=30
   ) %>%
   layout(xaxis = list(title="<b>Collision Probability</b>",
-                      tickvals = seq(-720,-20,100),
-                      ticktext = seq(-720,-20,100) %>% exp() %>% formatC(format="e",digits=2),
+                      tickvals = seq(-25,0,2),
+                      ticktext = seq(-25,0,2) %>% exp() %>% formatC(format="e",digits=2),
                       tickfont = list(size = 10),
                       tickangle = 90,
                       gridcolor="#333333"),
@@ -123,33 +124,36 @@ Pc_at_1_day <-
                 line = list(color='#FFFFFF'),
                 x0 = quantile(log(concernSummary$Pc_min),.95,na.rm=TRUE),
                 x1 = quantile(log(concernSummary$Pc_min),.95,na.rm=TRUE),
-                y0 = 0, y1 = 2695),
-           
+                y0 = 0, y1 = 197),
+           list(type= "line",
+                line = list(color='#FFFFFF'),
+                x0 = quantile(log(concernSummary$Pc_min),.5,na.rm=TRUE),
+                x1 = quantile(log(concernSummary$Pc_min),.5,na.rm=TRUE),
+                y0 = 0, y1 = 197),
            list(type ="line",
                 line = list(color='#FFFFFF'),
                 x0 = log(1e-5), x1 = log(1e-5),
-                y0 = 0, y1 = 2150),
+                y0 = 0, y1 = 177),
            list(type ="line",
                 line = list(color='#FFFFFF'),
-                x0 = log(1e-100), x1 = log(1e-100),
-                y0 = 0, y1 = 1900),
-           list(type ="line",
-                line = list(color='#FFFFFF'),
-                x0 = log(1e-200), x1 = log(1e-200),
-                y0 = 0, y1 = 1650)),
+                x0 = log(1e-8), x1 = log(1e-8),
+                y0 = 0, y1 = 177)),
            
          annotations = list(
            list(text=paste("<b>.95 Quartile:</b><br>",
                            quantile(concernSummary$Pc_min,.95,na.rm=TRUE) %>%
                              formatC(format="e",digits=2)),
-                x = log(1e-45),
-                y = 2600, showarrow=FALSE),
+                x = log(quantile(concernSummary$Pc_min,.95,na.rm=TRUE)),
+                y = 210, showarrow=FALSE),
+           list(text=paste("<b>.50 Quartile:</b><br>",
+                           quantile(concernSummary$Pc_min,.5,na.rm=TRUE) %>%
+                             formatC(format="e",digits=2)),
+                x = log(quantile(concernSummary$Pc_min,.5,na.rm=TRUE)),
+                y = 210, showarrow=FALSE),
            list(text = paste("<b>1e-5</b>"),
-                x = log(1e-5), y = 2250, showarrow=FALSE),
-           list(text = paste("<b>1e-100</b>"),
-                x = log(1e-100), y = 2000, showarrow=FALSE),
-           list(text = paste("<b>1e-200</b>"),
-                x = log(1e-200), y = 1750, showarrow=FALSE))
+                x = log(1e-5), y = 185, showarrow=FALSE),
+           list(text = paste("<b>1e-8</b>"),
+                x = log(1e-8), y = 185, showarrow=FALSE))
   )
   
 

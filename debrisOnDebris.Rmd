@@ -78,9 +78,9 @@ options(scipen=99)
     - Debris collision results in at least <b>one fragment</b> at least five centimeters in diameter.
     - <b>Five</b> days to time of closest approach (TCA).
     - Concern Events terminology defined as <b>$\text{Collision Probability} >= 1\text{e-}5$</b> within a day to TCA.<br><br>
-- Study progress:
-    - We can visualize the missed concern event and false alarm risk space.
-    - We have developed an application to explore various warning thresholds.<br><br>
+- Final study implementations:
+    - Removed all observations with $<= 1\text{e-}10\text{ Collision Probability}$.
+    - Tested 
 
 # Problem Formulation
 - <b>Problem Statement:</b> Under what circumstances should debris-on-debris collision warnings be used?
@@ -100,20 +100,6 @@ options(scipen=99)
 
 ## Collision Probability Density
 We need to find a range of values to appropriately label events of concern.
-
-How many events have $\text{Collision Probability} = 0$ when within one day to TCA?
-
-<center>
-```{r EDA1, echo=FALSE}
-
-#load("data/concernData.RData")
-
-# How many are 0?
-load("products/zeroCount.RData")
-zeroCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
-
-```
-</center>
 
 <br>
 
@@ -142,49 +128,6 @@ as a surrogate to label a concern event.
 
 <br>
 
-## Concern Event Frequency 
-How is our visibility of concern events limited?
-
-How many Concern Events if the threshold is $1\text{e-}5$?
-
-<center>
-```{r EDA2, echo=FALSE}
-
-load("products/concernCount.RData")
-concernCount %>% formattable(align="l") %>% as.htmlwidget(width=250)#
-
-```
-</center>
-
-<br>
-
-We focus our initial analysis on concern events with fragment size of $>= 1$ fragment. Future methodology will include events with higher fragment sizes.
-
-<br>
-
-<br>
-
-<center>
-<b>Figure 3: Concern Event Count over Time</b>
-</center>
-
-<br>
-
-```{r eda_plot2, echo=FALSE}
-load("products/newConcernSummary_plot.RData")
-newConcernSummary_plot
-```
-
-<b>Conclusions:</b>
-
-- At five days to TCA the number of new concern events drastically increases.
-- We will only have visibility of about $50%$ of concern events at five days to TCA.
-- There is an advantage to a warning time interval within 5 days.
-
-<br>
-
-<br>
-
 ## Collision Probability Variability
 
 - Does the $\text{Collision Probability}$ increase as we approach TCA?
@@ -199,8 +142,8 @@ newConcernSummary_plot
 <br>
 
 ```{r eda_plot3, echo=FALSE}
-load("products/Pc_by_TCA_plot.RData")
-Pc_by_TCA_plot
+load("products/Pc_delta.RData")
+Pc_delta
 ```
 <br>
 
@@ -221,7 +164,7 @@ where $Pc\_warn$ is the $\text{Collision Probability}$ that triggers a warning.
 
 <br>
 
-# Risk Tradespace
+# Risk Tradespace {.tabset .tabset-fade}
 We need to evaluate warning thresholds by examining the trade space between risk aversion and tolerance.
 
 We have the following working definitions:
@@ -252,14 +195,42 @@ We can now explore how the warning threshold effects the $\text{FP}$ and $\text{
 
 <br>
 
-```{r eda_plot4, echo=FALSE}
-load("products/concernRates_plot.RData")
-concernRates_plot
+## Five days to TCA
+```{r concern_plot1, echo=FALSE}
+load("products/concernCount_plots.RData")
+concernCount_5
 ```
 
 Hovering over the plot, we see that the warning threshold decreases as FN decreases and as FP increases. In this case, the more severe mistake is FN (not warning for a concern event), which is our Type II error. The FP (false alarm, Type I error) has much lower rates because of the high number of events with Collision Probabilities falling below $1\text{e-}5$ within one day to TCA.
 
 We recommend this chart to inform warning thresholds for five days to TCA, for concern events previously defined.
+
+## Five and four days to TCA
+```{r concern_plot2, echo=FALSE}
+concernCount_5_and_4
+```
+
+## Five, four, and three days to TCA
+```{r concern_plot3, echo=FALSE}
+concernCount_5_and_4_and_3
+```
+
+# Risk Tradespace Short Notice {.tabset .tabset-fade}
+
+## Four days to TCA
+```{r concern_plot4, echo=FALSE}
+concernCount_4
+```
+
+## Three days to TCA
+```{r concern_plot5, echo=FALSE}
+concernCount_3
+```
+
+## Two days to TCA
+```{r concern_plot6, echo=FALSE}
+concernCount_2
+```
 
 # Way Forward 
 - Finalize warning threshold point estimate formulation.
