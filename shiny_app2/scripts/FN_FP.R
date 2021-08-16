@@ -1,5 +1,5 @@
 
-# Get data for a range of values ####
+# Adpated Gabe's script to make a function for the shiny app
 FN_FP_Plot <-function(pc_concern =1e-5,
                       TCA_days = 5,
                       frags=c("PcBest","PcFrag10","PcFrag100")
@@ -25,7 +25,6 @@ fragLabel <- case_when(
 concernCount[,"FragLabel" := fragLabel]
 
 # FP against FN plot ####
-#concernCount_plot <- 
 plot <- concernCount %>% 
   plot_ly(type="scatter",
           mode="lines",
