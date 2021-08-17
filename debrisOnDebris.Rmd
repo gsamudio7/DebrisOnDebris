@@ -223,13 +223,13 @@ Based on an even priority between Missed Events (FN) and False Alarms (FP), we f
 
 ```{r recommendation, echo=FALSE}
 load("products/finalPlots.RData")
-finalRec %>% formattable(align="l") %>% as.htmlwidget()
+final$finalRec %>% formattable(align="l") %>% as.htmlwidget()
 ```
 
 ## Performance
 
 ```{r recommendationPerformance, echo=FALSE}
-finalPerformance %>% formattable(align="l") %>% as.htmlwidget()
+final$finalPerformance %>% formattable(align="l") %>% as.htmlwidget()
 ```
 
 # Risk Tradespace with Uncertainty 
@@ -240,7 +240,7 @@ Taking the optimal warning thresholds for each fragment size and days to TCA, we
 </center>
 
 ```{r concern_plot4, echo=FALSE}
-final
+final$plot
 ```
 
 
