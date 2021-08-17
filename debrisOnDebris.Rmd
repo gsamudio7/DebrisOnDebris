@@ -193,62 +193,41 @@ We can now explore how the warning threshold affects the $\text{FP}$ and $\text{
 </center>
 
 ```{r concern_plot1, echo=FALSE}
-load("products/concernCount_plots.RData")
-concernCount_5
+load("products/finalPlots.RData")
+concernCount_5_plot
 ```
-
-## Five and four days to TCA
-
-<center>
-<b>Figure 5: Warning Performance at Five and Four Days to TCA</b>
-</center>
-
-```{r concern_plot2, echo=FALSE}
-concernCount_5_and_4
-```
-
-## Five, four, and three days to TCA
-
-<center>
-<b>Figure 6: Warning Performance at Five, Four and Three Days to TCA</b>
-</center>
-
-```{r concern_plot3, echo=FALSE}
-concernCount_5_and_4_and_3
-```
-
-# Risk Tradespace Short Notice {.tabset .tabset-fade}
-Recall a higher concentration of events that remain stable at three days to TCA. This implies that as TCA approaches, the Collision Probability changes less, which means our ability to correctly warn should improve. We explore short notice warning performance at 4, 3, and 2 days to TCA.
 
 ## Four days to TCA
 
 <center>
-<b>Figure 7: Warning Performance at Four Days to TCA</b>
+<b>Figure 5: Warning Performance at Four Days to TCA</b>
 </center>
 
-```{r concern_plot4, echo=FALSE}
-concernCount_4
+```{r concern_plot2, echo=FALSE}
+concernCount_4_plot
 ```
 
 ## Three days to TCA
 
 <center>
-<b>Figure 8: Warning Performance at Three Days to TCA</b>
+<b>Figure 6: Warning Performance at Three Days to TCA</b>
 </center>
 
-```{r concern_plot5, echo=FALSE}
-concernCount_3
+```{r concern_plot3, echo=FALSE}
+concernCount_3_plot
 ```
 
-## Two days to TCA
+# Risk Tradespace with Uncertainty 
+Taking the optimal warning thresholds for each fragment size and days to TCA, we evaluate the performance on random data samples, and computing the 95% Confidence Interval for FN and FP counts. The boxes indicate the 95% bounds and the dot is the observed performance.
 
 <center>
-<b>Figure 9: Warning Performance at Two Days to TCA</b>
+<b>Figure 7: Warning Performance at Three, Four and Five Days to TCA</b>
 </center>
 
-```{r concern_plot6, echo=FALSE}
-concernCount_2
+```{r concern_plot4, echo=FALSE}
+final
 ```
+
 
 # Way Forward 
 - Stuff and things
