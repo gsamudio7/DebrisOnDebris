@@ -225,6 +225,7 @@ concernSummary_at_TOI[,"fragLabel" := case_when(
 )]
 concernSummary <- concernSummary[,!"fragNum"]
 concernSummary_at_TOI <- concernSummary_at_TOI[,!"fragNum"]
+
 # Save and push to Git
 save(concernSummary,
      concernSummary_at_TOI,
@@ -236,6 +237,9 @@ debrisData <- merge(
   concernSummary[,c("eventNumber","Pc_min","fragLabel")],
   by=c("eventNumber","fragLabel")
 )
+
+# Make fragLabel a factor
+debrisData[,"fragLabel" := as.factor(fragLabel)]
 
 # Save and push to Git
 save(concernSummary,concernSummary_at_TOI,file="data/concernData.RData")
