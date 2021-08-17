@@ -120,10 +120,23 @@ Pc_at_1_day
 
 <br>
 
+<center>
+```{r severeTable, echo=FALSE}
+load("data/debrisData.RData")
+debrisData[fragLabel %in% c(">= 1000",">= 10000"),
+           .(`Fragment Size`=fragLabel,
+             Median=median(Pc_min) %>% formatC(format="e",digits=2),
+             Mean=mean(Pc_min) %>% formatC(format="e",digits=2),
+             `50% Quantile`=quantile(Pc_min,.5) %>% formatC(format="e",digits=2))
+             ,by=fragLabel][,!"fragLabel"] %>% 
+  formattable(align="l") %>% as.htmlwidget(width=400)
+```
+</center>
+
 We use,
 
 <center>
-$\bf{\text{Collision Probabilty} \ge 1\text{e-5} \text{ and days to TCA} < 1 \text{ day,}}$ 
+$\bf{\text{Collision Probabilty} \ge 1\text{e-7} \text{ and days to TCA} < 1 \text{ day,}}$ 
 </center>
 
 <br>
@@ -221,16 +234,20 @@ concernCount_3_plot
 # Recommended Thresholds  
 Based on an even priority between Missed Events (FN) and False Alarms (FP), we found the following warning thresholds had the best performance with the observed data:
 
+<center>
 ```{r recommendation, echo=FALSE}
 load("products/finalPlots.RData")
-final$finalRec %>% formattable(align="l") %>% as.htmlwidget()
+final$finalRec %>% formattable(align="l") %>% as.htmlwidget(width=400)
 ```
+</center>
 
 ## Performance
 
+<center>
 ```{r recommendationPerformance, echo=FALSE}
-final$finalPerformance %>% formattable(align="l") %>% as.htmlwidget()
+final$finalPerformance %>% formattable(align="l") %>% as.htmlwidget(width=500)
 ```
+</center>
 
 # Risk Tradespace with Uncertainty 
 Taking the optimal warning thresholds for each fragment size and days to TCA, we evaluate the performance on random data samples, and computing the 95% Confidence Interval for FN and FP counts. The boxes indicate the 95% bounds and the dot is the observed performance.
