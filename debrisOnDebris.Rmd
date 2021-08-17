@@ -70,6 +70,7 @@ library(plotly)
 library(RColorBrewer)
 library(formattable)
 options(scipen=99)
+
 ```
 
 # Executive Summary
@@ -217,9 +218,18 @@ concernCount_4_plot
 concernCount_3_plot
 ```
 
-## Recommended Thresholds 
+# Recommended Thresholds  
+Based on an even priority between Missed Events (FN) and False Alarms (FP), we found the following warning thresholds had the best performance with the observed data:
+
 ```{r recommendation, echo=FALSE}
-finalData %>% formattable(align="l") %>% as.htmlwidget()
+load("products/finalPlots.RData")
+finalRec %>% formattable(align="l") %>% as.htmlwidget()
+```
+
+## Performance
+
+```{r recommendationPerformance, echo=FALSE}
+finalPerformance %>% formattable(align="l") %>% as.htmlwidget()
 ```
 
 # Risk Tradespace with Uncertainty 
