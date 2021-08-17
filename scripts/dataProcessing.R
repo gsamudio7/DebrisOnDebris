@@ -215,13 +215,17 @@ concernSummary_at_TOI <- concernSummary_at_TOI[Pc_at_TOI > 1e-10]
 concernSummary[,"fragLabel" := case_when(
   fragNum == "PcBest" ~ ">= 1",
   fragNum == "PcFrag10" ~ ">= 10",
-  fragNum == "PcFrag100" ~ ">= 100"
+  fragNum == "PcFrag100" ~ ">= 100",
+  fragNum == "PcFrag1000" ~ ">= 1000",
+  fragNum == "PcFrag10000" ~ ">= 10000",
 )]
 
 concernSummary_at_TOI[,"fragLabel" := case_when(
   fragNum == "PcBest" ~ ">= 1",
   fragNum == "PcFrag10" ~ ">= 10",
-  fragNum == "PcFrag100" ~ ">= 100"
+  fragNum == "PcFrag100" ~ ">= 100",
+  fragNum == "PcFrag1000" ~ ">= 1000",
+  fragNum == "PcFrag10000" ~ ">= 10000",
 )]
 concernSummary <- concernSummary[,!"fragNum"]
 concernSummary_at_TOI <- concernSummary_at_TOI[,!"fragNum"]
