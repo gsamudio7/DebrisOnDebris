@@ -99,7 +99,7 @@ concernSummary[,"Fragment Size" := case_when(
 )]
 
 Pc_at_1_day <- 
-  concernSummary[`Fragment Size` %in% c(">= 1",">= 10",">= 100")] %>%
+  debrisData %>%
   plot_ly(
     type="histogram",
     x=~log(Pc_min),
