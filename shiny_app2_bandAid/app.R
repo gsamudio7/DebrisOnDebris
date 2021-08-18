@@ -43,6 +43,7 @@ ui <- dashboardPage(
 
         
         actionButton("MakeUpdates", HTML("<b>Check Performance</b>")),
+        downloadButton('downloadData', HTML("<b>Download Thresholds</b>")),
         actionButton("monte", HTML("<b>Check Variability</b>"))
     ),
     dashboardBody(
@@ -146,7 +147,7 @@ server <- function(input, output) {
         final()[["plot"]]
     })
     
-    output$tbl_final_rec <- renderDT({
+    output$tbl_final_rec <- renderDT(server=FALSE, {
         rbindlist(list(concernCount_5()[["optThresholds"]],
                        concernCount_4()[["optThresholds"]],
                        concernCount_3()[["optThresholds"]]))[
@@ -155,9 +156,23 @@ server <- function(input, output) {
                       options = list(searching = FALSE))
     })
 
-    output$tbl_final_per <- renderDT({
-        datatable(final()[["finalPerformance"]], style = 'bootstrap',options = list(searching = FALSE))
+    output$tbl_final_per <- renderDataTable({
+        datatable(final()[["finalPerformance"]], 
+                  style = 'bootstrap',
+                  options = list(searching = FALSE))
     })
+    
+    output$downloadData <- downloadHandler(
+          filename = function() {
+            paste('data-', Sys.Date(), '.csv', sep='')
+          },
+          content = function(con) {
+            fwrite(rbindlist(list(concernCount_5()[["optThresholds"]],
+                                  concernCount_4()[["optThresholds"]],
+                                  concernCount_3()[["optThresholds"]]))[
+                                      ,c("TCA_Bin","fragLabel","WarnThreshold")], con)
+          }
+        )
 
 } # end server function
 
