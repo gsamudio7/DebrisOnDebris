@@ -123,12 +123,10 @@ Pc_at_1_day
 <center>
 ```{r severeTable, echo=FALSE}
 load("data/debrisData.RData")
-debrisData[fragLabel %in% c(">= 1000",">= 10000"),
+debrisData[Pc_min >= quantile(Pc_min,.75),
            .(`Fragment Size`=fragLabel,
-             Median=median(Pc_min) %>% formatC(format="e",digits=2),
-             Mean=mean(Pc_min) %>% formatC(format="e",digits=2),
-             `50% Quantile`=quantile(Pc_min,.5) %>% formatC(format="e",digits=2))
-             ,by=fragLabel][,!"fragLabel"] %>% 
+             `Super Quantile`=mean(Pc_min) %>% formatC(format="e",digits=2)),
+           by=fragLabel][,!"fragLabel"] %>% 
   formattable(align="l") %>% as.htmlwidget(width=400)
 ```
 </center>
