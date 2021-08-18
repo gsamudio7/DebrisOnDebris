@@ -13,6 +13,10 @@ library(purrr)
 load("data/debrisData.RData")
 events <- fread("data/events.csv")
 scale <- 365/events[,uniqueN(round(time_of_screening))]
+concernProbs <- debrisData[Pc_min >= quantile(Pc_min,.75),
+                           .(`Fragment Size`=fragLabel,
+                             `.75 Super Quantile`=mean(Pc_min) %>% 
+                                 formatC(format="e",digits=2)),by=fragLabel][,!"fragLabel"]
 
 # Source functions
 # Debris Confusion Function ####
@@ -123,11 +127,7 @@ trade_off_plot <- function(tcaBins=c(5),
 
 evalPerformance <- function(
     numSamples=100,
-    optimalThresholdList=list(
-        concernCount_5$optThresholds,
-        concernCount_4$optThresholds,
-        concernCount_3$optThresholds
-    )) {
+    optimalThresholdList) {
     
     # Aggregate point estimates over 3,4,5
     cat("\nPreparing data\n")
@@ -146,22 +146,22 @@ evalPerformance <- function(
             lapply(1:5,function(j) {
                 debrisConfusion(
                     df=debrisData[TCA_Bin == 5][sample(.N,nrow(debrisData[TCA_Bin == 5]),replace=TRUE)],
-                    Pc_warn=concernCount_5$optThresholds$WarnThreshold[j] %>% as.numeric(),
-                    fragVector=concernCount_5$optThresholds$fragLabel[j])
+                    Pc_warn=optimalThresholdList[["5"]]$WarnThreshold[j] %>% as.numeric(),
+                    fragVector=optimalThresholdList[["5"]]$fragLabel[j])
             }) %>% rbindlist(),
             
             lapply(1:5,function(j) {
                 debrisConfusion(
                     df=debrisData[TCA_Bin == 4][sample(.N,nrow(debrisData[TCA_Bin == 4]),replace=TRUE)],
-                    Pc_warn=concernCount_4$optThresholds$WarnThreshold[j] %>% as.numeric(),
-                    fragVector=concernCount_4$optThresholds$fragLabel[j])
+                    Pc_warn=optimalThresholdList[["4"]]$WarnThreshold[j] %>% as.numeric(),
+                    fragVector=optimalThresholdList[["4"]]$fragLabel[j])
             }) %>% rbindlist(),
             
             lapply(1:5,function(j) {
                 debrisConfusion(
                     df=debrisData[TCA_Bin == 3][sample(.N,nrow(debrisData[TCA_Bin == 3]),replace=TRUE)],
-                    Pc_warn=concernCount_3$optThresholds$WarnThreshold[j] %>% as.numeric(),
-                    fragVector=concernCount_3$optThresholds$fragLabel[j])
+                    Pc_warn=optimalThresholdList[["3"]]$WarnThreshold[j] %>% as.numeric(),
+                    fragVector=optimalThresholdList[["3"]]$fragLabel[j])
             }) %>% rbindlist()
         ))
         
@@ -300,7 +300,8 @@ ui <- dashboardPage(
         textInput("input_10000", "Fragments >= 10,000", 0),
 
         
-        actionButton("MakeUpdates", "Update")
+        actionButton("MakeUpdates", HTML("<b>Check Performance</b>")),
+        actionButton("monte", HTML("<b>Check Variability</b>"))
     ),
     dashboardBody(
         # add css custom to the app
@@ -310,10 +311,10 @@ ui <- dashboardPage(
         # Boxes need to be put in a row (or column)
         fluidRow(
             box(
-                h4("Time of Closest Approach 5 Days"),
+                h4("5 Days to TCA"),
                 plotlyOutput("plot1", height = 430)),
             box(
-                h4("Time of Closest Approach 4 Days"),
+                h4("4 Days to TCA"),
                 plotlyOutput("plot2", height = 430))
         
             
@@ -322,20 +323,19 @@ ui <- dashboardPage(
 
         fluidRow(
             box(
-                h4("Time of Closest Approach 3 Days"),
+                h4("3 Days to TCA"),
                 plotlyOutput("plot3", height = 430)),
             box(
-                h4("Final Plot"),
-                plotlyOutput("plot4", height = 430))
-            
-
+                h4("Thresholds"),
+                DTOutput('tbl_final_rec', height = 430))
             ),
         
         fluidRow(
-            box(h4("Final Recommendations"),
-                DTOutput('tbl_final_rec', height = 430)),
+            box(
+            h4("Variability"),
+            plotlyOutput("plot4", height = 430)),
             
-            box(h4("Final Performance"),
+            box(h4("Performance"),
                 DTOutput('tbl_final_per', height = 430))
         )
         )
@@ -379,12 +379,12 @@ server <- function(input, output) {
             ">= 10000"=mt_10000())
         )})
     
-    final <- eventReactive(input$MakeUpdates, {
+    final <- eventReactive(input$monte, {
         evalPerformance(numSamples=100,
                         optimalThresholdList=list(
-                            concernCount_5()[["optThresholds"]],
-                            concernCount_4()[["optThresholds"]],
-                            concernCount_3()[["optThresholds"]]
+                            "5"=concernCount_5()[["optThresholds"]],
+                            "4"=concernCount_4()[["optThresholds"]],
+                            "3"=concernCount_3()[["optThresholds"]]
                         ))
     })
     
@@ -405,14 +405,16 @@ server <- function(input, output) {
     })
     
     output$tbl_final_rec <- renderDT({
-        datatable(final()[["finalRec"]], selection="multiple", escape=FALSE,
-        options = list(sDom  = '<"top">lrt<"bottom">ip'))
-        })
-
+        rbindlist(list(concernCount_5()[["optThresholds"]],
+                       concernCount_4()[["optThresholds"]],
+                       concernCount_3()[["optThresholds"]]))[
+                           ,c("TCA_Bin","fragLabel","WarnThreshold")] %>%
+            datatable(style="bootstrap",
+                      options = list(searching = FALSE))
+    })
 
     output$tbl_final_per <- renderDT({
-        datatable(final()[["finalPerformance"]], selection="multiple", escape=FALSE,
-                  options = list(sDom  = '<"top">lrt<"bottom">ip'))
+        datatable(final()[["finalPerformance"]], style = 'bootstrap',options = list(searching = FALSE))
     })
 
 } # end server function
