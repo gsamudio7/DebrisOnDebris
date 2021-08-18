@@ -36,17 +36,27 @@
 
 p {
   color: #fff;
-  padding-top: 20px;
+  padding-top: 5px;
   padding-right: 20px;
   padding-bottom: 20px;
   padding-left: 20px;
 }
+
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+    background-color: #333;
+    border-style: solid;
+    border-color: #fff;
+    border-left-color: transparent;
+}
+
 
 h4 {
   font-family: "Georgia", Times, "Times New Roman", serif;
   font-weight: bold;
   font-size: 18px;
   color: #fff;
+  padding-top: 20px;
+  padding-bottom: 0px;
   padding-left: 20px;
 }
 
@@ -55,10 +65,8 @@ h4 {
   color: white;
 }
 
-
-.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
-    background-color: #333;
-    border-style: solid;
-    border-color: #fff;
-    border-left-color: transparent;
+div.datatables {
+    color: #fff;
 }
+
+
