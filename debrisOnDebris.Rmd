@@ -82,7 +82,7 @@ options(scipen=99)
     - Removed all observations with $\bf{\le 1\text{e-}10}$ Collision Probability.
     - Tested **Warning Thresholds between** $\bf{1\text{e-7}\text{ and }1\text{e-5}}$.
     - Evaluated Missed Alert verse False Alarm risk at **5, 4 and 3** days to TCA.
-    - Evaluated performance variability 
+    - Evaluated performance variability.<br><br> 
 - Final conclusions:
     - Performance increases as days to TCA decreases.
     - Optimal Warning Thresholds depend on days to TCA.
@@ -248,5 +248,12 @@ Taking the optimal warning thresholds for each fragment size and days to TCA, we
 ```{r concern_plot4, echo=FALSE}
 final$plot
 ```
+
+# Final Conclusions
+- .75 Superquantile is a conservative surrogate
+- Warning Thresholds and Missed Tolerance should depend on Fragment Size, and Days to TCA
+- Further analysis required to investigate high degree of variability in performance
+
+<br><br><br><br>
 
 # References

@@ -67,20 +67,20 @@ trade_off_plot <- function(tcaBins=c(5),
                          "<b>Missed: </b>",round(Missed),"<br>",
                          "<b>False Alarms: </b>",round(FalseAlarms),"<br>"),
             hoverinfo="text",
-            colors=colorRampPalette(c("blue4","dodgerblue","lightgray"))(5),
-            line=list(width=3.25)
+            colors=colorRampPalette(c("#0645ad","orange"))(5),
+            line=list(width=3.75)
     ) %>%
     
     layout(
       legend = list(title = list(text="<b>Fragment Size</b>")),
       xaxis = list(title="<b>False Alarms (FP)</b>",
-                   gridcolor="#333333"),
+                   gridcolor="#222222"),
       yaxis = list(title="<b>Missed Concern Events (FN)</b>",
-                   gridcolor="#333333",
+                   gridcolor="#222222",
                    zeroline = TRUE,
-                   zerolinecolor="#333333"),
-      plot_bgcolor  = "#444444",
-      paper_bgcolor = "#444444",
+                   zerolinecolor="#222222"),
+      plot_bgcolor  = "#333333",
+      paper_bgcolor = "#333333",
       font = list(color = '#FFFFFF')
     ) %>%
     
@@ -192,7 +192,7 @@ evalPerformance <- function(
                   line=list(color="#FFFFFF",
                             width=3.25)),
       color=~fragLabel,
-      colors=colorRampPalette(c("blue4","dodgerblue","lightgray"))(5),
+      colors=colorRampPalette(c("#0645ad","orange"))(5),
       marker=list(size=12),
       hoverinfo="text",
       text=~paste("<b>Fragment Size:</b> ",fragLabel,"<br>",
@@ -244,13 +244,13 @@ evalPerformance <- function(
       ),
       legend = list(title = list(text="<b>Fragment Size</b>")),
       xaxis = list(title="<b>False Alarms (FP)</b>",
-                   gridcolor="#333333"),
+                   gridcolor="#222222"),
       yaxis = list(title="<b>Missed Concern Events (FN)</b>",
-                   gridcolor="#333333",
+                   gridcolor="#222222",
                    zeroline = TRUE,
-                   zerolinecolor="#333333"),
-      plot_bgcolor  = "#444444",
-      paper_bgcolor = "#444444",
+                   zerolinecolor="#222222"),
+      plot_bgcolor  = "#333333",
+      paper_bgcolor = "#333333",
       font = list(color = '#FFFFFF')
     ) %>% plotly_build()
   
