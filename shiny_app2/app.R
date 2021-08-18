@@ -84,7 +84,7 @@ server <- function(input, output) {
     #load("data/concernData.RData",envir = .GlobalEnv) # new data with new functions
     load("data/debrisData.RData", envir = .GlobalEnv)
     events <- fread("data/events.csv")
-    (scale <- 365/events[,uniqueN(round(time_of_screening))]) # there is problem remove this tell Gabe
+    scale <- 1.520833 # there is problem remove this tell Gabe
     source("scripts/derbrisConfusion_function.R")
     source("scripts/trade_off_plots_function.R")
     source("scripts/evalPerformance_function.R")
@@ -106,9 +106,15 @@ server <- function(input, output) {
             ">= 1000"=input$input_1000,
             ">= 10000"=input$input_10000)
         
-        tt <-c(seq(from=1e-8,to=1e-5,by=1e-6),1e-5) # by 1e-8 
+        tt <-c(seq(from=1e-7,to=1e-5,by=1e-6),1e-7) # by 1e-8 
         
-        concernCount_5 <- trade_off_plot(test_thresholds=tt, missTolerance = mt_list)
+        
+        # assign(concernCount_5, trade_off_plot(tcaBins=c(5),test_thresholds=tt, missTolerance = mt_list),envir = .GlobalEnv)
+        # assign(concernCount_4, trade_off_plot(tcaBins=c(4),test_thresholds=tt, missTolerance = mt_list),envir = .GlobalEnv)
+        # assign(concernCount_3, trade_off_plot(tcaBins=c(3),test_thresholds=tt, missTolerance = mt_list),envir = .GlobalEnv)
+        # 
+        print(ls())
+        concernCount_5 <- trade_off_plot(tcaBins=c(5),test_thresholds=tt, missTolerance = mt_list)
         concernCount_4 <- trade_off_plot(tcaBins=c(4),test_thresholds=tt, missTolerance = mt_list)
         concernCount_3 <- trade_off_plot(tcaBins=c(3),test_thresholds=tt, missTolerance = mt_list)
         
