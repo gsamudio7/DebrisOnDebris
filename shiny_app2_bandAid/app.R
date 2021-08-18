@@ -26,25 +26,28 @@ source("scripts/supportFunctions.R")
 
 ui <- dashboardPage(
 
-    dashboardHeader(title = "USSPACECOM Space Conjuction",
-                    titleWidth = 350),
+    dashboardHeader(title = "USSPACECOM Space Debris Risk Analysis Tool",
+                    titleWidth = 500),
     dashboardSidebar(
         HTML('<center><img src="SPACECOM_logo.png" width="150"></center>'),
         h4("Miss Tolerances"),
-        p( paste("Space conjunction analysis in support of USSPACECOM. 
-        Choose the parameters then press update.")),
+        p("Choose the minimum number of yearly missed events (False Negatives) required for each debris on debris collision type."),
         
         # Concern inputs
-        textInput("input_1", "Fragments >= 1", 15),
-        textInput("input_10", "Fragments >= 10", 10),
-        textInput("input_100", "Fragments >= 100", 5),
-        textInput("input_1000", "Fragments >= 1,000", 1),
-        textInput("input_10000", "Fragments >= 10,000", 0),
+        textInput("input_1", ">= 1", 15),
+        textInput("input_10", ">= 10", 10),
+        textInput("input_100", ">= 100", 5),
+        textInput("input_1000", ">= 1,000", 1),
+        textInput("input_10000", ">= 10,000", 0),
 
-        
         actionButton("MakeUpdates", HTML("<b>Check Performance</b>")),
-        downloadButton('downloadData', HTML("<b>Download Thresholds</b>")),
-        actionButton("monte", HTML("<b>Check Variability</b>"))
+        actionButton("monte", HTML("<b>Check Variability</b>")),
+        
+        fluidRow(column(10,tableOutput("table")),
+                 column(3, style = "margin-left: 12px;",
+                        downloadButton("downloadData", HTML("<b>Download Thresholds</b>"),
+                           style="color: #fff; background-color: #0645ad; border-color: #fff;"))
+        )
     ),
     dashboardBody(
         # add css custom to the app
@@ -55,10 +58,10 @@ ui <- dashboardPage(
         fluidRow(
             box(
                 h4("5 Days to TCA"),
-                plotlyOutput("plot1", height = 430) %>% withSpinner(color="#2359c4")),
+                plotlyOutput("plot1", height = 430) %>% withSpinner(color="orange")),
             box(
                 h4("4 Days to TCA"),
-                plotlyOutput("plot2", height = 430) %>% withSpinner(color="#2359c4"))
+                plotlyOutput("plot2", height = 430) %>% withSpinner(color="orange"))
         
             
             ),
@@ -67,19 +70,19 @@ ui <- dashboardPage(
         fluidRow(
             box(
                 h4("3 Days to TCA"),
-                plotlyOutput("plot3", height = 430) %>% withSpinner(color="#2359c4")),
+                plotlyOutput("plot3", height = 430) %>% withSpinner(color="orange")),
             box(
                 h4("Thresholds"),
-                DTOutput('tbl_final_rec', height = 430) %>% withSpinner(color="#2359c4"))
+                DTOutput('tbl_final_rec', height = 430) %>% withSpinner(color="orange"))
             ),
         
         fluidRow(
             box(
             h4("Variability"),
-            plotlyOutput("plot4", height = 430) %>% withSpinner(color="#2359c4")),
+            plotlyOutput("plot4", height = 430) %>% withSpinner(color="orange")),
             
             box(h4("Performance"),
-                DTOutput('tbl_final_per', height = 430) %>% withSpinner(color="#2359c4"))
+                DTOutput('tbl_final_per', height = 430) %>% withSpinner(color="orange"))
         )
         )
     ) # end UI

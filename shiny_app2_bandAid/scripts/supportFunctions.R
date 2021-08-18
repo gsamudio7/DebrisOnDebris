@@ -12,8 +12,8 @@ debrisConfusion <- function(df,
   # Loop over frag numbers
   for (frag in fragVector) {
     
-    # Get the Pc concern value for the fragment size
-    Pc_concern <- concernProbs[`Fragment Size`==frag,as.numeric(`.75 Super Quantile`)]
+    # Get the Pc concern value for the fragLabel
+    Pc_concern <- concernProbs[`fragLabel`==frag,as.numeric(`.75 Superquantile`)]
     
     # Count missed events (FN) and false alarms (FP) and warnings
     # Accumulate in a data.table
@@ -72,7 +72,7 @@ trade_off_plot <- function(tcaBins=c(5),
     ) %>%
     
     layout(
-      legend = list(title = list(text="<b>Fragment Size</b>")),
+      legend = list(title = list(text="<b>fragLabel</b>")),
       xaxis = list(title="<b>False Alarms (FP)</b>",
                    gridcolor="#222222"),
       yaxis = list(title="<b>Missed Concern Events (FN)</b>",
@@ -166,14 +166,14 @@ evalPerformance <- function(
   
   # Organize results
   finalRec <- merge(aggSim_and_Data,agg,by="fragLabel")[
-    ,.(`Fragment Size`=fragLabel,
+    ,.(`fragLabel`=fragLabel,
        `Days to TCA`=TCA_Bin,
        `Warn Threshold`=WarnThreshold),by=fragLabel]
   
   finalRec <- finalRec[,!"fragLabel"]
   
   finalPerformance <- aggSim_and_Data[,.(
-    `Fragment Size`=fragLabel,
+    `fragLabel`=fragLabel,
     `Missed`=paste0(aggMissed," [",round(missedLow)," - ",round(missedHigh),"]"),
     `False Alarms`=paste0(aggFalseAlarms," [",round(falseAlarmLow)," - ",round(falseAlarmHigh),"]"),
     `Warnings`=paste0(aggWarnings," [",round(warningsLow)," - ",round(warningsHigh),"]")
@@ -195,7 +195,7 @@ evalPerformance <- function(
       colors=colorRampPalette(c("#0645ad","orange"))(5),
       marker=list(size=12),
       hoverinfo="text",
-      text=~paste("<b>Fragment Size:</b> ",fragLabel,"<br>",
+      text=~paste("<b>fragLabel:</b> ",fragLabel,"<br>",
                   "<b>Total Missed:</b> ",aggMissed,"<br>",
                   "<b>95% CI:</b> [",round(missedLow)," - ",round(missedHigh),"]<br><br>", 
                   "<b>Total False Alarms:</b> ",aggFalseAlarms,"<br>",
@@ -242,7 +242,7 @@ evalPerformance <- function(
           y0 = aggSim_and_Data[fragLabel==">= 10000",missedLow], 
           y1 = aggSim_and_Data[fragLabel==">= 10000",missedHigh], yref = "y")
       ),
-      legend = list(title = list(text="<b>Fragment Size</b>")),
+      legend = list(title = list(text="<b>fragLabel</b>")),
       xaxis = list(title="<b>False Alarms (FP)</b>",
                    gridcolor="#222222"),
       yaxis = list(title="<b>Missed Concern Events (FN)</b>",
