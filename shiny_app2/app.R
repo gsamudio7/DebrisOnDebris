@@ -87,7 +87,7 @@ server <- function(input, output) {
     load("data/debrisData.RData", envir = .GlobalEnv)
     events <- fread("data/events.csv")
     scale <- 1.520833 # there is problem remove this tell Gabe
-    source("scripts/derbrisConfusion_function.R")
+    source("scripts/debrisConfusion_function.R")
     source("scripts/trade_off_plots_function.R")
     source("scripts/evalPerformance_function.R")
 

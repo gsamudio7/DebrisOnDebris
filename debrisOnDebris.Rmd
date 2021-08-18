@@ -76,15 +76,14 @@ options(scipen=99)
 # Executive Summary
 - Charged with informing the process to develop a debris on debris collision warning threshold to mitigate future collision risk and limit false alarms.<br><br>
 - The study has focused on the following parameters:
-    - Debris collision results in at least **1, 10, and 100 fragments** at least five centimeters in diameter.
     - **5, 4, and 3** days to time of closest approach (TCA).
-    - Concern Events terminology defined as **Collision Probability** $\bf{\ge\text{1e-5}}$ within a day to TCA.<br><br>
+    - Concern Events terminology defined as **Collision Probability** $\bf{\ge\text{.75 Superquantile}}$ within a day to TCA.<br><br>
 - Final study implementations:
     - Removed all observations with $\bf{\le 1\text{e-}10}$ Collision Probability.
-    - Tested **Warning Thresholds between** $\bf{1\text{e-8}\text{ and }1\text{e-5}}$.
-    - Evaluated Missed Alert verse False Alarm risk at **5, 4 and 5, and 3,4 and 5** days to TCA.
-    - Evaluated Short Notice Missed Alert verse False Alarm risk at **4, 3, and 2** days to TCA.<br><br>
-- Conclusions
+    - Tested **Warning Thresholds between** $\bf{1\text{e-7}\text{ and }1\text{e-5}}$.
+    - Evaluated Missed Alert verse False Alarm risk at **5, 4 and 3** days to TCA.
+    - Evaluated performance variability 
+- Final conclusions:
     - Performance increases as days to TCA decreases.
     - Optimal Warning Thresholds depend on days to TCA.
     - Variability in Collision Probability decreases as days to TCA decreases.<br><br>
@@ -125,21 +124,13 @@ Pc_at_1_day
 load("data/debrisData.RData")
 debrisData[Pc_min >= quantile(Pc_min,.75),
            .(`Fragment Size`=fragLabel,
-             `.75 Super Quantile`=mean(Pc_min) %>% formatC(format="e",digits=2)),
+             `.75 Superquantile`=mean(Pc_min) %>% formatC(format="e",digits=2)),
            by=fragLabel][,!"fragLabel"] %>% 
   formattable(align="l") %>% as.htmlwidget(width=400)
 ```
 </center>
 
-We use,
-
-<center>
-$\bf{\text{Collision Probabilty} \ge 1\text{e-7} \text{ and days to TCA} < 1 \text{ day,}}$ 
-</center>
-
-<br>
-
-as a surrogate to label a concern event. 
+We use the .75 Superquantile for each fragment size as a surrogate to label a concern event [@rockafellar_superquantiles_2013]. 
 
 <br>
 
@@ -164,13 +155,13 @@ Pc_delta
 
 - The variability tightens slightly around 0 as TCA approaches.
 - Some evidence of a slight decrease in Collision Probability as TCA approaches.
-- No compelling evidence of an advantage in significantly varying Warning Threshold.
+- No compelling evidence of a single optimal Warning Threshold for each Fragment Size.
 - We use:
 
 <br>
 
 <center>
-$\bf{1\text{e-8} \le Pc\_warn \le 1\text{e-5}}$,
+$\bf{1\text{e-7} \le Pc\_warn \le 1\text{e-5}}$,
 </center>
 
 <br>
@@ -247,7 +238,7 @@ final$finalPerformance %>% formattable(align="l") %>% as.htmlwidget(width=500)
 ```
 </center>
 
-# Risk Tradespace with Uncertainty 
+# Performance with Uncertainty 
 Taking the optimal warning thresholds for each fragment size and days to TCA, we evaluate the performance on random data samples, and computing the 95% Confidence Interval for FN and FP counts. The boxes indicate the 95% bounds and the dot is the observed performance.
 
 <center>
@@ -257,9 +248,5 @@ Taking the optimal warning thresholds for each fragment size and days to TCA, we
 ```{r concern_plot4, echo=FALSE}
 final$plot
 ```
-
-
-# Way Forward 
-- Stuff and things
 
 # References
