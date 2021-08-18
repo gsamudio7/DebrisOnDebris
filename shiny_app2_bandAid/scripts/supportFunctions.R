@@ -1,3 +1,15 @@
+library(data.table)
+library(dplyr)
+library(plotly)
+library(RColorBrewer)
+
+# Load data
+load("data/debrisData.RData")
+events <- fread("data/events.csv")
+scale <- 365/events[,uniqueN(round(time_of_screening))]
+concernProbs <- debrisData[Pc_min >= quantile(Pc_min,.75),
+                           .(`.75 Superquantile`=mean(Pc_min)),by=fragLabel]
+
 # Debris Confusion Function ####
 debrisConfusion <- function(df,
                             Pc_warn,
