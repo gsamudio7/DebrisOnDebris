@@ -9,6 +9,8 @@ library(RColorBrewer)
 library(DT)
 
 
+
+
 ui <- dashboardPage(
 
     dashboardHeader(title = "USSPACECOM Space Conjuction",
@@ -30,11 +32,11 @@ ui <- dashboardPage(
         Choose the parameters then press update.")),
         
         # Concern inputs
-        textInput("input_1", "Fragments >= 1", 15),
-        textInput("input_10", "Fragments >= 10", 10),
-        textInput("input_100", "Fragments >= 100", 5),
-        textInput("input_1000", "Fragments >= 1,000", 1),
-        textInput("input_10000", "Fragments >= 10,000", 0),
+        numericInput("input_1", "Fragments >= 1", 15),
+        numericInput("input_10", "Fragments >= 10", 10),
+        numericInput("input_100", "Fragments >= 100", 5),
+        numericInput("input_1000", "Fragments >= 1,000", 1),
+        numericInput("input_10000", "Fragments >= 10,000", 0),
 
         
         actionButton("MakeUpdates", "Update")
@@ -81,30 +83,39 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
     
-    #load("data/concernData.RData",envir = .GlobalEnv) # new data with new functions
+   # load("data/concernData.RData",envir = .GlobalEnv) # new data with new functions
     load("data/debrisData.RData", envir = .GlobalEnv)
     events <- fread("data/events.csv")
     scale <- 1.520833 # there is problem remove this tell Gabe
     source("scripts/derbrisConfusion_function.R")
     source("scripts/trade_off_plots_function.R")
     source("scripts/evalPerformance_function.R")
-    #source("scripts/debrisConfusion.R")
-    #source("scripts/FN_FP.R")
 
+    # remove this if you go back on derbirs fucntion
+    concernProbs <- debrisData[Pc_min >= quantile(Pc_min,.75),
+                               .(`Fragment Size`=fragLabel,
+                                 `.75 Super Quantile`=mean(Pc_min) %>% 
+                                     formatC(format="e",digits=2)),by=fragLabel][,!"fragLabel"]
     
     
     make_data <- function(){
-        
+   
         index = 1
         list_of_plots = list()
-        
 
+        mt_list=list(
+            ">= 1"=15,
+            ">= 10"=10,
+            ">= 100"=5,
+            ">= 1000"=1,
+            ">= 10000"=0)
+        
         mt_list <- list(
-            ">= 1"=input$input_1,
-            ">= 10"=input$input_10,
-            ">= 100"=input$input_100,
-            ">= 1000"=input$input_1000,
-            ">= 10000"=input$input_10000)
+            ">= 1"=as.integer(input$input_1),
+            ">= 10"=as.integer(input$input_10),
+            ">= 100"=as.integer(input$input_100),
+            ">= 1000"=as.integer(input$input_1000),
+            ">= 10000"=as.integer(input$input_10000))
         
         tt <-c(seq(from=1e-7,to=1e-5,by=1e-6),1e-7) # by 1e-8 
         
@@ -113,7 +124,13 @@ server <- function(input, output) {
         # assign(concernCount_4, trade_off_plot(tcaBins=c(4),test_thresholds=tt, missTolerance = mt_list),envir = .GlobalEnv)
         # assign(concernCount_3, trade_off_plot(tcaBins=c(3),test_thresholds=tt, missTolerance = mt_list),envir = .GlobalEnv)
         # 
+        print("getwd")
+        print(getwd())
+        print("ls")
         print(ls())
+        print("ls.str")
+        for(i in ls.str())print(i)
+        
         concernCount_5 <- trade_off_plot(tcaBins=c(5),test_thresholds=tt, missTolerance = mt_list)
         concernCount_4 <- trade_off_plot(tcaBins=c(4),test_thresholds=tt, missTolerance = mt_list)
         concernCount_3 <- trade_off_plot(tcaBins=c(3),test_thresholds=tt, missTolerance = mt_list)
@@ -136,7 +153,7 @@ server <- function(input, output) {
     
     list_of_df = list()
     
-    react <- eventReactive(input$MakeUpdates, {make_data()})
+    react <- eventReactive(input$MakeUpdates, make_data())
     
     output$plot1 <- renderPlotly({
         #react()[[1]]
@@ -146,7 +163,10 @@ server <- function(input, output) {
     
     output$tbl_final_rec <- renderDT({
         datatable(react()[[4]], selection="multiple", escape=FALSE, 
-        options = list(sDom  = '<"top">lrt<"bottom">ip'))
+                  options = list(sDom  = '<"top">lrt<"bottom">ip',initComplete = JS(
+                      "function(settings, json) {",
+                      "$(this.api().table().header()).css({'color': '#fff'});",
+                      "}")))
         })
     
     output$plot2 <- renderPlotly({
@@ -167,7 +187,10 @@ server <- function(input, output) {
     
     output$tbl_final_per<- renderDT({
         datatable(react()[[6]], selection="multiple", escape=FALSE, 
-                  options = list(sDom  = '<"top">lrt<"bottom">ip'))
+                  options = list(sDom  = '<"top">lrt<"bottom">ip',initComplete = JS(
+                      "function(settings, json) {",
+                      "$(this.api().table().header()).css({'color': '#fff'});",
+                      "}")))
     })
 
 } # end server function
