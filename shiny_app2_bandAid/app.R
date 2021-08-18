@@ -12,6 +12,7 @@ library(shinycssloaders)
 
 
 
+
 # UI ####
 
 ui <- dashboardPage(
@@ -62,7 +63,7 @@ ui <- dashboardPage(
                 h4("3 Days to TCA"),
                 plotlyOutput("plot3", height = 430) %>% withSpinner(color="orange")),
             box(
-                h4("Thresholds"),
+                h4("Recommended Thresholds"),
                 DTOutput('tbl_final_rec', height = 430) %>% withSpinner(color="orange"))
             ),
         
@@ -155,13 +156,13 @@ server <- function(input, output) {
                        concernCount_4()[["optThresholds"]],
                        concernCount_3()[["optThresholds"]]))[
                            ,c("TCA_Bin","fragLabel","WarnThreshold")] %>%
-            datatable(style="bootstrap",
+            datatable(style="bootstrap",selection="none",
                       options = list(searching = FALSE))
     })
 
     output$tbl_final_per <- renderDataTable({
         datatable(final()[["finalPerformance"]], 
-                  style = 'bootstrap',
+                  style = 'bootstrap',selection="none",
                   options = list(searching = FALSE))
     })
     
