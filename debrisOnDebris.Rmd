@@ -125,7 +125,7 @@ Pc_at_1_day
 load("data/debrisData.RData")
 debrisData[Pc_min >= quantile(Pc_min,.75),
            .(`Fragment Size`=fragLabel,
-             `Super Quantile`=mean(Pc_min) %>% formatC(format="e",digits=2)),
+             `.75 Super Quantile`=mean(Pc_min) %>% formatC(format="e",digits=2)),
            by=fragLabel][,!"fragLabel"] %>% 
   formattable(align="l") %>% as.htmlwidget(width=400)
 ```
