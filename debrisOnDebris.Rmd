@@ -43,11 +43,10 @@ bibliography:
 
 </style>
 <center>
-<img src="assets/MIT-Orbit-Debris_0.jpeg" width="80%"/> 
+<img src="assets/screenShot.png" width="80%"/> 
 <br>
 
-<b>Figure 1: Space debris orbiting Earth.</b><br>
-Image from [MIT news website](https://news.mit.edu/2017/space-junk-shards-teflon-0619) depicting space debris orbiting the Earth at ~17,500 mph.
+<b>Figure 1: </b>Screen shot of NASA video depicting hole in International Space State Canada Arm, discovered May 12, 2021. The damage was likely the result of colliding with space debris.<br><br>
 </center>
 <br>
 
