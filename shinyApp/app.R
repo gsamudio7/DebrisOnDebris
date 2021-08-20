@@ -10,17 +10,19 @@ library(DT)
 library(purrr)
 library(shinycssloaders)
 
-
-
-
 # UI ####
-
 ui <- dashboardPage(
 
     dashboardHeader(title = "USSPACECOM Space Debris Risk Analysis Tool",
                     titleWidth = 500),
     dashboardSidebar(
         HTML('<center><img src="SPACECOM_logo.png" width="150"></center>'),
+        h4("Load data from dropbox"),
+        textInput("url","Paste Dropbox data share url",
+                  "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"),
+        actionButton("loadData","Load data"),
+        textOutput("dataStatus"),
+        hr(),
         h4("Miss Tolerances"),
         p("Choose the minimum number of yearly missed events (False Negatives) required for each debris on debris collision type."),
         
@@ -78,7 +80,7 @@ ui <- dashboardPage(
         )
     ) # end UI
 
-
+# Server ####
 server <- function(input, output) {
     
     # Load data
@@ -90,6 +92,22 @@ server <- function(input, output) {
     
     # Source functions
     source("scripts/supportFunctions.R")
+    
+    # Pull data
+    dataStatus <- reactiveVal()
+    output$dataStatus <- renderText({dataStatus()})
+    debrisInfo <- observeEvent(input$loadData, {
+        
+        dataStatus("Uploading data from dropbox")
+        raw <- downloadFromDropBox(dropbox_csv_url=input$url) 
+        
+        dataStatus("Processing data")
+        debrisInfo <- raw %>% processDebris()
+        
+        dataStatus("Data ready")
+        debrisInfo
+    })
+    
     
     # Get input
     mt_1 <- eventReactive(input$input_1, {as.numeric(input$input_1)})

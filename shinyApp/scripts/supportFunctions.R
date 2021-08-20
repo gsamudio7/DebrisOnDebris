@@ -323,44 +323,44 @@ evalPerformance <- function(
 }
 
 
-# Testing
-url <- "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"
-raw <- downloadFromDropBox(dropbox_csv_url=url) 
-debrisInfo <- raw %>% processDebris()
-trade_off_plot(debrisInfo=debrisInfo,
-               missTolerance=list(">= 1"=15,
-                                  ">= 10"=10,
-                                  ">= 100"=5,
-                                  ">= 1000"=1,
-                                  ">= 10000"=0))
-
-concernCount_5 <- trade_off_plot(debrisInfo=debrisInfo,
-                                 missTolerance=list(">= 1"=15,
-                                                    ">= 10"=10,
-                                                    ">= 100"=5,
-                                                    ">= 1000"=1,
-                                                    ">= 10000"=0),
-                                 tcaBin=5)
-concernCount_4 <- trade_off_plot(debrisInfo=debrisInfo,
-                                 missTolerance=list(">= 1"=15,
-                                                    ">= 10"=10,
-                                                    ">= 100"=5,
-                                                    ">= 1000"=1,
-                                                    ">= 10000"=0),
-                                 tcaBin=4)
-concernCount_3 <- trade_off_plot(debrisInfo=debrisInfo,
-                                 missTolerance=list(">= 1"=15,
-                                                    ">= 10"=10,
-                                                    ">= 100"=5,
-                                                    ">= 1000"=1,
-                                                    ">= 10000"=0),
-                                 tcaBin=3)
-
-optimalThresholds <- list(
-  concernCount_5$optThresholds,
-  concernCount_4$optThresholds,
-  concernCount_3$optThresholds
-) %>% rbindlist()
-
-evalPerformance(numSamples=10000,
-                optimalThresholds=optimalThresholds)
+# # Testing
+# url <- "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"
+# raw <- downloadFromDropBox(dropbox_csv_url=url) 
+# debrisInfo <- raw %>% processDebris()
+# trade_off_plot(debrisInfo=debrisInfo,
+#                missTolerance=list(">= 1"=15,
+#                                   ">= 10"=10,
+#                                   ">= 100"=5,
+#                                   ">= 1000"=1,
+#                                   ">= 10000"=0))
+# 
+# concernCount_5 <- trade_off_plot(debrisInfo=debrisInfo,
+#                                  missTolerance=list(">= 1"=15,
+#                                                     ">= 10"=10,
+#                                                     ">= 100"=5,
+#                                                     ">= 1000"=1,
+#                                                     ">= 10000"=0),
+#                                  tcaBin=5)
+# concernCount_4 <- trade_off_plot(debrisInfo=debrisInfo,
+#                                  missTolerance=list(">= 1"=15,
+#                                                     ">= 10"=10,
+#                                                     ">= 100"=5,
+#                                                     ">= 1000"=1,
+#                                                     ">= 10000"=0),
+#                                  tcaBin=4)
+# concernCount_3 <- trade_off_plot(debrisInfo=debrisInfo,
+#                                  missTolerance=list(">= 1"=15,
+#                                                     ">= 10"=10,
+#                                                     ">= 100"=5,
+#                                                     ">= 1000"=1,
+#                                                     ">= 10000"=0),
+#                                  tcaBin=3)
+# 
+# optimalThresholds <- list(
+#   concernCount_5$optThresholds,
+#   concernCount_4$optThresholds,
+#   concernCount_3$optThresholds
+# ) %>% rbindlist()
+# 
+# evalPerformance(numSamples=10000,
+#                 optimalThresholds=optimalThresholds)
