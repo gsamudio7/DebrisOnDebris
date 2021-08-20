@@ -1,75 +1,152 @@
+
 library(data.table)
 library(dplyr)
+library(repmis)
+library(stringr)
 library(plotly)
 library(RColorBrewer)
+library(tidyr)
 
-# Load data
-load("data/debrisData.RData")
-events <- fread("data/events.csv")
-scale <- 365/events[,uniqueN(round(time_of_screening))]
-concernProbs <- debrisData[Pc_min >= quantile(Pc_min,.75),
-                           .(`.75 Superquantile`=mean(Pc_min)),by=fragLabel]
 
-# Debris Confusion Function ####
-debrisConfusion <- function(df,
-                            Pc_warn,
-                            concernProbData=concernProbs,
-                            fragVector=debrisData[,unique(fragLabel)],
-                            verbose=FALSE
-) {
-  
-  # Initiate result list
-  result <- list()
-  
-  # Loop over frag numbers
-  for (frag in fragVector) {
-    
-    # Get the Pc concern value for the fragLabel
-    Pc_concern <- concernProbs[`fragLabel`==frag,as.numeric(`.75 Superquantile`)]
-    
-    # Count missed events (FN) and false alarms (FP) and warnings
-    # Accumulate in a data.table
-    result[[paste0(frag)]] <- data.table(
-      "WarnThreshold"=Pc_warn %>% formatC(format="e",digits=2),
-      "Missed"=round(df[fragLabel==frag & Pc_at_TOI < Pc_warn & Pc_min >= Pc_concern,.N]*scale),
-      "FalseAlarms"=round(df[fragLabel==frag & Pc_at_TOI >= Pc_warn & Pc_min < Pc_concern,.N]*scale),
-      "WarningCount"=round(df[fragLabel==frag & Pc_at_TOI >= Pc_warn,.N]*scale),
-      "fragLabel"=frag,
-      "TCA_Bin"=df[,unique(TCA_Bin)]
-    )
-  }
-  return(rbindlist(result))
+# Function to download from dropbox ####
+downloadFromDropBox <- function(dropbox_csv_url) {
+  cat("downloading from dropbox\n")
+  str_sub(dropbox_csv_url, nchar(dropbox_csv_url)) <- "1" # Make sure the last digit is 1
+  return(repmis::source_data(dropbox_csv_url,header=FALSE) %>% data.table())
 }
 
+
+# Function to process data downloaded from dropbox ####
+processDebris <- function(raw) {
+  
+  # Keep relevant columns
+  cat("processing data\n")
+  raw <- raw[,c(1,2,3,11,14,15,16,17,45,46,58)]
+  
+  # Name columns
+  raw <- raw %>%
+    setnames(c("V1","V2","V3",
+               "V11","V14","V15",
+               "V16","V17","V45",
+               "V46","V58"),
+             c("Primary","Secondary","MissDistance",
+               "PcBest","PcFrag10","PcFrag100",
+               "PcFrag1000","PcFrag10000",
+               "time_of_screening","TCA",
+               "eventNumber"))
+  
+  # Generate time to TCA column and remove redundant columns
+  raw[,"time2TCA" := TCA - time_of_screening]
+  
+  # Determine scalar to transform quantities to yearly counts
+  scale <- 365/raw[,uniqueN(round(time_of_screening))]
+  
+  # Gather observations and summarize 
+  processedData <- raw[,c("PcBest","PcFrag10","PcFrag100",
+              "PcFrag1000","PcFrag10000","eventNumber","time2TCA")] %>%
+    gather("fragLabel","Pc",-eventNumber,-time2TCA) %>% data.table()
+  suppressWarnings(processedData[,"Pc" := as.numeric(Pc)])
+  
+  # Remove observations with less than 1e-10 Collision Probability
+  processedData <- processedData[Pc > 1e-10]
+  
+  # Bin days to TCA
+  processedData[,"TCA_Bin" := as.factor(ceiling(time2TCA))]
+  
+  # Get the latest recorded Pc at each days to TCA bin
+  processedData <- processedData[
+    ,.(bool=time2TCA==max(time2TCA),Pc=Pc)
+    ,by=c("TCA_Bin","fragLabel","eventNumber")][bool==TRUE][,!"bool"]
+  
+  # Aesthetic fragment size label
+  processedData[,"fragLabel" := as.factor(case_when(
+    fragLabel == "PcBest" ~ ">= 1",
+    fragLabel == "PcFrag10" ~ ">= 10",
+    fragLabel == "PcFrag100" ~ ">= 100",
+    fragLabel == "PcFrag1000" ~ ">= 1000",
+    fragLabel == "PcFrag10000" ~ ">= 10000",
+  ))]
+
+  # Clean up RAM and return
+  rm(raw)
+  return(list("data"=processedData %>% spread(TCA_Bin, Pc),
+              "concernProbs"=processedData[Pc >= quantile(Pc,.95),
+                                           .(`.95 Superquantile`=mean(Pc)),
+                                           by=fragLabel],
+              "scale"=scale))
+}
+
+# Debris Confusion Function ####
+debrisConfusion <- function(Pc_warn,
+                            tca_of_interest,
+                            debrisInfo) {
+  
+  # Filter to days to TCA of interest
+  df <- cbind(
+    debrisInfo$data[,c("fragLabel",
+                       "eventNumber",
+                       "1")],
+    debrisInfo$data[[as.character(tca_of_interest)]]) 
+  df[,"Pc_at_TCA" := V2]
+  
+  return(purrr::map_dfr(
+    .x=debrisInfo$data[,unique(fragLabel)],
+    .f=function(frag) {
+      
+      # Get the Pc concern value for the fragLabel
+      Pc_concern <- debrisInfo$concernProbs[
+        fragLabel==frag,`.95 Superquantile`]
+
+      # Count missed events (FN) and false alarms (FP) and warnings
+      # Accumulate in a data.table
+      return(data.table(
+        "WarnThreshold"=Pc_warn %>% formatC(format="e",digits=2),
+        "Missed"=round(df[fragLabel==frag & Pc_at_TCA < Pc_warn & 
+                                            `1` >= Pc_concern,.N]*debrisInfo$scale),
+        "FalseAlarms"=round(df[fragLabel==frag & Pc_at_TCA >= Pc_warn & 
+                                                 `1` < Pc_concern,.N]*debrisInfo$scale),
+        "WarningCount"=round(df[fragLabel==frag & Pc_at_TCA >= Pc_warn,.N]*debrisInfo$scale),
+        "fragLabel"=frag,
+        "TCA_Bin"=tca_of_interest
+    ))
+  }))
+}
+
+
+
+
 # Trade off plot function
-trade_off_plot <- function(tcaBins=c(5),
+trade_off_plot <- function(tcaBin=5,
                            test_thresholds=seq(from=1e-7,to=1e-5,by=1e-7),
-                           missTolerance) {
+                           missTolerance,
+                           debrisInfo) {
   
   # Compute point estimate
   cat("\nComputing point estimates")
-  concernCount <- purrr::map(
+  concernCount <- purrr::map_dfr(
     test_thresholds,
     debrisConfusion,
-    df=debrisData[TCA_Bin %in% tcaBins]) %>% rbindlist() 
+    tca_of_interest=tcaBin,
+    debrisInfo=debrisInfo) 
   
   # Compute optimal thresholds 
   cat("\nComputing optimal thresholds")
-  optimal_thresholds <- lapply(
-    concernCount[,unique(fragLabel)],
-    function(x) {concernCount[fragLabel==x & Missed <= missTolerance[[x]]][
+  optimal_thresholds <- purrr::map_dfr(
+    .x=concernCount[,unique(fragLabel)],
+    .f=function(x) {concernCount[fragLabel==x & Missed <= missTolerance[[x]]][
       FalseAlarms==min(FalseAlarms)][
         WarnThreshold==min(WarnThreshold),
-        c("WarnThreshold","Missed","FalseAlarms","fragLabel","WarningCount","TCA_Bin")] %>%
-        unique()}
-  ) %>% rbindlist()
+        c("WarnThreshold","Missed","FalseAlarms","fragLabel","WarningCount","TCA_Bin")]}
+  ) 
   
   # FP against FN plot ####
   cat("\nPlotting\n")
-  trade_off <- 
+  trade_off <- suppressWarnings(
     concernCount %>% 
     plot_ly(type="scatter",
             mode="lines",
+            colors=colorRampPalette(c("dodgerblue","orange"))(5)) %>%
+    add_trace(
             x=~FalseAlarms,
             y=~Missed,
             color=~fragLabel,
@@ -79,12 +156,11 @@ trade_off_plot <- function(tcaBins=c(5),
                          "<b>Missed: </b>",round(Missed),"<br>",
                          "<b>False Alarms: </b>",round(FalseAlarms),"<br>"),
             hoverinfo="text",
-            colors=colorRampPalette(c("#0645ad","orange"))(5),
             line=list(width=3.75)
     ) %>%
     
     layout(
-      legend = list(title = list(text="<b>fragLabel</b>")),
+      legend = list(title = list(text="<b>Fragment Size</b>")),
       xaxis = list(title="<b>False Alarms (FP)</b>",
                    gridcolor="#222222"),
       yaxis = list(title="<b>Missed Concern Events (FN)</b>",
@@ -94,9 +170,9 @@ trade_off_plot <- function(tcaBins=c(5),
       plot_bgcolor  = "#333333",
       paper_bgcolor = "#333333",
       font = list(color = '#FFFFFF')
-    ) %>%
+    ) %>% 
     
-    add_trace(
+    add_markers(
       data=optimal_thresholds,
       type="scatter",
       mode="markers+lines",
@@ -106,16 +182,27 @@ trade_off_plot <- function(tcaBins=c(5),
                             width=3.25)),
       x=~FalseAlarms,
       y=~Missed,
-      color='rgba(17, 157, 255,0)',
       line=list(color='rgba(17, 157, 255,0)'),
       name=paste("<b>Miss Tolerances:</b><br>",
                  paste0(names(missTolerance)," | ",missTolerance,collapse="\n")),
       showlegend=TRUE
-    ) 
+    )) 
   
   return(list("plot"=trade_off,
               "optThresholds"=optimal_thresholds))}
 
+# Testing
+url <- "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"
+raw <- downloadFromDropBox(dropbox_csv_url=url) 
+debrisInfo <- raw %>% processDebris()
+trade_off_plot(debrisInfo=debrisInfo,
+               missTolerance=list(">= 1"=15,
+                                  ">= 10"=10,
+                                  ">= 100"=5,
+                                  ">= 1000"=1,
+                                  ">= 10000"=0))
+
+# fix me
 evalPerformance <- function(
   numSamples=100,
   optimalThresholdList) {
@@ -204,7 +291,7 @@ evalPerformance <- function(
                   line=list(color="#FFFFFF",
                             width=3.25)),
       color=~fragLabel,
-      colors=colorRampPalette(c("#0645ad","orange"))(5),
+      colors=colorRampPalette(c("dodgerblue","orange"))(5),
       marker=list(size=12),
       hoverinfo="text",
       text=~paste("<b>fragLabel:</b> ",fragLabel,"<br>",
