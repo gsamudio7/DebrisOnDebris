@@ -83,18 +83,18 @@ debrisConfusion <- function(Pc_warn,
   
   # Filter to days to TCA of interest
   df <- cbind(
-    debrisInfo$data[,c("fragLabel",
+    debrisInfo[["data"]][,c("fragLabel",
                        "eventNumber",
                        "1")],
-    debrisInfo$data[[as.character(tca_of_interest)]]) 
+    debrisInfo[["data"]][[as.character(tca_of_interest)]]) %>% data.table() 
   df[,"Pc_at_TCA" := V2]
   
   return(purrr::map_dfr(
-    .x=debrisInfo$data[,unique(fragLabel)],
+    .x=debrisInfo[["data"]][,unique(fragLabel)],
     .f=function(frag) {
       
       # Get the Pc concern value for the fragLabel
-      Pc_concern <- debrisInfo$concernProbs[
+      Pc_concern <- debrisInfo[["concernProbs"]][
         fragLabel==frag,`.75 Superquantile`]
 
       # Count missed events (FN) and false alarms (FP) and warnings
@@ -102,10 +102,10 @@ debrisConfusion <- function(Pc_warn,
       return(data.table(
         "WarnThreshold"=Pc_warn %>% formatC(format="e",digits=2),
         "Missed"=round(df[fragLabel==frag & Pc_at_TCA < Pc_warn & 
-                                            `1` >= Pc_concern,.N]*debrisInfo$scale),
+                                            `1` >= Pc_concern,.N]*debrisInfo[["scale"]]),
         "FalseAlarms"=round(df[fragLabel==frag & Pc_at_TCA >= Pc_warn & 
-                                                 `1` < Pc_concern,.N]*debrisInfo$scale),
-        "WarningCount"=round(df[fragLabel==frag & Pc_at_TCA >= Pc_warn,.N]*debrisInfo$scale),
+                                                 `1` < Pc_concern,.N]*debrisInfo[["scale"]]),
+        "WarningCount"=round(df[fragLabel==frag & Pc_at_TCA >= Pc_warn,.N]*debrisInfo[["scale"]]),
         "fragLabel"=frag,
         "TCA_Bin"=tca_of_interest
     ))
@@ -172,6 +172,11 @@ trade_off_plot <- function(tcaBin=5,
     
     add_markers(
       data=optimal_thresholds,
+      text=~paste0("<b>Warning Threshold: </b>",WarnThreshold,"<br>",
+                   "<b>Warning Count: </b>",round(WarningCount),"<br>",
+                   "<b>Missed: </b>",round(Missed),"<br>",
+                   "<b>False Alarms: </b>",round(FalseAlarms),"<br>"),
+      hoverinfo="text",
       type="scatter",
       mode="markers+lines",
       marker=list(size=15,
@@ -191,6 +196,7 @@ trade_off_plot <- function(tcaBin=5,
 
 evalPerformance <- function(
   numSamples=100,
+  debrisInfo,
   optimalThresholds) {
   
   # Aggregate point estimates over 3,4,5
@@ -323,44 +329,3 @@ evalPerformance <- function(
 }
 
 
-# # Testing
-# url <- "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"
-# raw <- downloadFromDropBox(dropbox_csv_url=url) 
-# debrisInfo <- raw %>% processDebris()
-# trade_off_plot(debrisInfo=debrisInfo,
-#                missTolerance=list(">= 1"=15,
-#                                   ">= 10"=10,
-#                                   ">= 100"=5,
-#                                   ">= 1000"=1,
-#                                   ">= 10000"=0))
-# 
-# concernCount_5 <- trade_off_plot(debrisInfo=debrisInfo,
-#                                  missTolerance=list(">= 1"=15,
-#                                                     ">= 10"=10,
-#                                                     ">= 100"=5,
-#                                                     ">= 1000"=1,
-#                                                     ">= 10000"=0),
-#                                  tcaBin=5)
-# concernCount_4 <- trade_off_plot(debrisInfo=debrisInfo,
-#                                  missTolerance=list(">= 1"=15,
-#                                                     ">= 10"=10,
-#                                                     ">= 100"=5,
-#                                                     ">= 1000"=1,
-#                                                     ">= 10000"=0),
-#                                  tcaBin=4)
-# concernCount_3 <- trade_off_plot(debrisInfo=debrisInfo,
-#                                  missTolerance=list(">= 1"=15,
-#                                                     ">= 10"=10,
-#                                                     ">= 100"=5,
-#                                                     ">= 1000"=1,
-#                                                     ">= 10000"=0),
-#                                  tcaBin=3)
-# 
-# optimalThresholds <- list(
-#   concernCount_5$optThresholds,
-#   concernCount_4$optThresholds,
-#   concernCount_3$optThresholds
-# ) %>% rbindlist()
-# 
-# evalPerformance(numSamples=10000,
-#                 optimalThresholds=optimalThresholds)
