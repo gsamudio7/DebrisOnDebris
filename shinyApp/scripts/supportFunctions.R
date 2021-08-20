@@ -70,8 +70,8 @@ processDebris <- function(raw) {
   # Clean up RAM and return
   rm(raw)
   return(list("data"=processedData %>% spread(TCA_Bin, Pc),
-              "concernProbs"=processedData[Pc >= quantile(Pc,.95),
-                                           .(`.95 Superquantile`=mean(Pc)),
+              "concernProbs"=processedData[Pc >= quantile(Pc,.75),
+                                           .(`.75 Superquantile`=mean(Pc)),
                                            by=fragLabel],
               "scale"=scale))
 }
@@ -95,7 +95,7 @@ debrisConfusion <- function(Pc_warn,
       
       # Get the Pc concern value for the fragLabel
       Pc_concern <- debrisInfo$concernProbs[
-        fragLabel==frag,`.95 Superquantile`]
+        fragLabel==frag,`.75 Superquantile`]
 
       # Count missed events (FN) and false alarms (FP) and warnings
       # Accumulate in a data.table
@@ -111,8 +111,6 @@ debrisConfusion <- function(Pc_warn,
     ))
   }))
 }
-
-
 
 
 # Trade off plot function
@@ -191,66 +189,41 @@ trade_off_plot <- function(tcaBin=5,
   return(list("plot"=trade_off,
               "optThresholds"=optimal_thresholds))}
 
-# Testing
-url <- "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"
-raw <- downloadFromDropBox(dropbox_csv_url=url) 
-debrisInfo <- raw %>% processDebris()
-trade_off_plot(debrisInfo=debrisInfo,
-               missTolerance=list(">= 1"=15,
-                                  ">= 10"=10,
-                                  ">= 100"=5,
-                                  ">= 1000"=1,
-                                  ">= 10000"=0))
-
-# fix me
 evalPerformance <- function(
   numSamples=100,
-  optimalThresholdList) {
+  optimalThresholds) {
   
   # Aggregate point estimates over 3,4,5
   cat("\nPreparing data\n")
-  agg <- rbindlist(optimalThresholdList)
-  aggData <- agg[,.(aggMissed=sum(Missed),
+  aggData <- optimalThresholds[,.(aggMissed=sum(Missed),
                     aggFalseAlarms=sum(FalseAlarms),
                     aggWarnings=sum(WarningCount)),by=fragLabel]
   
   # Run monte carlo using the optimal thresholds ####
   cat("Sampling\n")
-  aggSim <- data.table()
-  for (i in 1:numSamples) {
+  aggSim <- purrr::map_dfr(.x=1:numSamples,
+                           .f=function(x) {
     
-    # Sample and compute false alarm and missed with optimal warning thresholds 
-    aggMonte <- rbindlist(list(
-      lapply(1:5,function(j) {
-        debrisConfusion(
-          df=debrisData[TCA_Bin == 5][sample(.N,nrow(debrisData[TCA_Bin == 5]),replace=TRUE)],
-          Pc_warn=optimalThresholdList[["5"]]$WarnThreshold[j] %>% as.numeric(),
-          fragVector=optimalThresholdList[["5"]]$fragLabel[j])
-      }) %>% rbindlist(),
+      # Sample
+      sampleInfo <- debrisInfo
+      sampleInfo[["simData"]] <- debrisInfo$data[sample(.N,.N,replace=TRUE)]
       
-      lapply(1:5,function(j) {
-        debrisConfusion(
-          df=debrisData[TCA_Bin == 4][sample(.N,nrow(debrisData[TCA_Bin == 4]),replace=TRUE)],
-          Pc_warn=optimalThresholdList[["4"]]$WarnThreshold[j] %>% as.numeric(),
-          fragVector=optimalThresholdList[["4"]]$fragLabel[j])
-      }) %>% rbindlist(),
+      # Debris confusion function
+      sim <- apply(
+        X=optimalThresholds[,c("WarnThreshold","TCA_Bin","fragLabel")],
+        MARGIN=1,
+        FUN=function(x) {
+          sampleInfo[["data"]] <- sampleInfo[["simData"]][fragLabel==x[3]]
+          debrisConfusion(Pc_warn=as.numeric(x[1]),
+                                        tca_of_interest=x[2],
+                                        debrisInfo=sampleInfo)}) %>% rbindlist()
       
-      lapply(1:5,function(j) {
-        debrisConfusion(
-          df=debrisData[TCA_Bin == 3][sample(.N,nrow(debrisData[TCA_Bin == 3]),replace=TRUE)],
-          Pc_warn=optimalThresholdList[["3"]]$WarnThreshold[j] %>% as.numeric(),
-          fragVector=optimalThresholdList[["3"]]$fragLabel[j])
-      }) %>% rbindlist()
-    ))
-    
-    # Organize results
-    aggSim <- rbindlist(list(aggSim,
-                             aggMonte[,.(aggMissed=sum(Missed),
-                                         aggFalseAlarms=sum(FalseAlarms),
-                                         aggWarnings=sum(WarningCount)),by=fragLabel]))
-    
-  }
-  
+      # Total the FNs and FPs for the year
+      sim[,.(aggMissed=sum(Missed),
+             aggFalseAlarms=sum(FalseAlarms),
+             aggWarnings=sum(WarningCount)),by=fragLabel]
+  })
+
   # Calculate 95% CI
   cat("Computing 95% CI\n")
   aggSim_and_Data <- merge(
@@ -262,14 +235,6 @@ evalPerformance <- function(
               warningsLow=quantile(aggWarnings,.025)),by=fragLabel],
     aggData,
     "fragLabel")
-  
-  # Organize results
-  finalRec <- merge(aggSim_and_Data,agg,by="fragLabel")[
-    ,.(`fragLabel`=fragLabel,
-       `Days to TCA`=TCA_Bin,
-       `Warn Threshold`=WarnThreshold),by=fragLabel]
-  
-  finalRec <- finalRec[,!"fragLabel"]
   
   finalPerformance <- aggSim_and_Data[,.(
     `fragLabel`=fragLabel,
@@ -354,6 +319,48 @@ evalPerformance <- function(
     ) %>% plotly_build()
   
   return(list("plot"=final,
-              "finalRec"=finalRec,
               "finalPerformance"=finalPerformance))
 }
+
+
+# Testing
+url <- "https://www.dropbox.com/s/4si129wa5kou67i/DebrisOnDebris3.csv?dl=0"
+raw <- downloadFromDropBox(dropbox_csv_url=url) 
+debrisInfo <- raw %>% processDebris()
+trade_off_plot(debrisInfo=debrisInfo,
+               missTolerance=list(">= 1"=15,
+                                  ">= 10"=10,
+                                  ">= 100"=5,
+                                  ">= 1000"=1,
+                                  ">= 10000"=0))
+
+concernCount_5 <- trade_off_plot(debrisInfo=debrisInfo,
+                                 missTolerance=list(">= 1"=15,
+                                                    ">= 10"=10,
+                                                    ">= 100"=5,
+                                                    ">= 1000"=1,
+                                                    ">= 10000"=0),
+                                 tcaBin=5)
+concernCount_4 <- trade_off_plot(debrisInfo=debrisInfo,
+                                 missTolerance=list(">= 1"=15,
+                                                    ">= 10"=10,
+                                                    ">= 100"=5,
+                                                    ">= 1000"=1,
+                                                    ">= 10000"=0),
+                                 tcaBin=4)
+concernCount_3 <- trade_off_plot(debrisInfo=debrisInfo,
+                                 missTolerance=list(">= 1"=15,
+                                                    ">= 10"=10,
+                                                    ">= 100"=5,
+                                                    ">= 1000"=1,
+                                                    ">= 10000"=0),
+                                 tcaBin=3)
+
+optimalThresholds <- list(
+  concernCount_5$optThresholds,
+  concernCount_4$optThresholds,
+  concernCount_3$optThresholds
+) %>% rbindlist()
+
+evalPerformance(numSamples=10000,
+                optimalThresholds=optimalThresholds)
